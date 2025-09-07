@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10" 
+         xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+         xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities">
+  <Identity Name="AzureTtsBatchStudio" 
+            Publisher="CN=AzureTtsBatchStudio" 
+            Version="1.0.0.0" />
+  <Properties>
+    <DisplayName>Azure TTS Batch Studio</DisplayName>
+    <PublisherDisplayName>Azure TTS Batch Studio</PublisherDisplayName>
+    <Logo>Assets\avalonia-logo.png</Logo>
+    <Description>A complete desktop application for batch conversion of text to speech using Azure Cognitive Services. Features include support for multiple languages and voices, customizable speech parameters, and various audio format outputs.</Description>
+  </Properties>
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.17763.0" MaxVersionTested="10.0.22621.0" />
+    <PackageDependency Name="Microsoft.VCLibs.140.00.UWPDesktop" MinVersion="14.0.24217.0" Publisher="CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US" />
+  </Dependencies>
+  <Capabilities>
+    <rescap:Capability Name="runFullTrust"/>
+  </Capabilities>
+  <Applications>
+    <Application Id="AzureTtsBatchStudio" Executable="AzureTtsBatchStudio.exe" EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements DisplayName="Azure TTS Batch Studio" 
+                          Square150x150Logo="Assets\avalonia-logo.png" 
+                          Square44x44Logo="Assets\avalonia-logo.png" 
+                          Description="Azure TTS Batch Studio - Batch text-to-speech conversion using Azure Cognitive Services" 
+                          BackgroundColor="transparent">
+        <uap:DefaultTile Wide310x150Logo="Assets\avalonia-logo.png"/>
+        <uap:SplashScreen Image="Assets\avalonia-logo.png"/>
+      </uap:VisualElements>
+      <Extensions>
+        <uap:Extension Category="windows.fileTypeAssociation">
+          <uap:FileTypeAssociation Name="textfiles">
+            <uap:SupportedFileTypes>
+              <uap:FileType>.txt</uap:FileType>
+              <uap:FileType>.csv</uap:FileType>
+            </uap:SupportedFileTypes>
+          </uap:FileTypeAssociation>
+        </uap:Extension>
+      </Extensions>
+    </Application>
+  </Applications>
+</Package>

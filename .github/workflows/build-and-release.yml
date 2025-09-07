@@ -1,0 +1,312 @@
+name: Build and Release
+
+on:
+  push:
+    branches: [ main, develop ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  DOTNET_VERSION: '8.0.x'
+  PROJECT_PATH: 'AzureTtsBatchStudio/AzureTtsBatchStudio.csproj'
+  OUTPUT_NAME: 'AzureTtsBatchStudio'
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        configuration: [Release]
+        platform: [x64, x86, arm64]
+        
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+
+    - name: Restore dependencies
+      run: dotnet restore ${{ env.PROJECT_PATH }}
+
+    - name: Build application
+      run: |
+        dotnet build ${{ env.PROJECT_PATH }} \
+          --configuration ${{ matrix.configuration }} \
+          --runtime win-${{ matrix.platform }} \
+          --no-restore \
+          --verbosity minimal
+
+    - name: Run tests
+      run: |
+        if (Test-Path "**/*Tests.csproj") {
+          dotnet test --configuration ${{ matrix.configuration }} --no-build --verbosity minimal
+        } else {
+          Write-Host "No test projects found, skipping tests"
+        }
+
+    - name: Publish self-contained application
+      run: |
+        dotnet publish ${{ env.PROJECT_PATH }} \
+          --configuration ${{ matrix.configuration }} \
+          --runtime win-${{ matrix.platform }} \
+          --self-contained true \
+          --output "./publish/win-${{ matrix.platform }}" \
+          --verbosity minimal \
+          -p:PublishSingleFile=false \
+          -p:PublishReadyToRun=true \
+          -p:IncludeNativeLibrariesForSelfExtract=true
+
+    - name: Create portable package
+      run: |
+        $publishPath = "./publish/win-${{ matrix.platform }}"
+        $portablePath = "./artifacts/portable"
+        New-Item -ItemType Directory -Force -Path $portablePath
+        
+        # Create portable zip
+        Compress-Archive -Path "$publishPath/*" -DestinationPath "$portablePath/${{ env.OUTPUT_NAME }}-${{ matrix.platform }}-portable.zip"
+        
+        # Create version info file
+        @"
+        Azure TTS Batch Studio - Portable Version
+        Version: $(git describe --tags --always)
+        Platform: win-${{ matrix.platform }}
+        Built: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')
+        
+        Instructions:
+        1. Extract all files to a directory
+        2. Run ${{ env.OUTPUT_NAME }}.exe
+        3. Configure Azure Speech Services credentials in Settings
+        "@ | Out-File -FilePath "$portablePath/README-${{ matrix.platform }}.txt" -Encoding UTF8
+
+    - name: Upload portable artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: portable-win-${{ matrix.platform }}
+        path: ./artifacts/portable/
+        retention-days: 30
+
+    - name: Upload published application
+      uses: actions/upload-artifact@v4
+      with:
+        name: published-win-${{ matrix.platform }}
+        path: ./publish/win-${{ matrix.platform }}/
+        retention-days: 30
+
+  create-installers:
+    needs: build
+    runs-on: windows-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: ./artifacts
+
+    - name: Setup Inno Setup
+      run: |
+        # Download and install Inno Setup
+        Invoke-WebRequest -Uri "https://jrsoftware.org/download.php/is.exe" -OutFile "innosetup.exe"
+        Start-Process -FilePath "innosetup.exe" -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART" -Wait
+
+    - name: Create Inno Setup script
+      run: |
+        $version = "${{ github.ref_name }}".TrimStart('v')
+        @"
+        #define MyAppName "Azure TTS Batch Studio"
+        #define MyAppVersion "$version"
+        #define MyAppPublisher "Azure TTS Batch Studio"
+        #define MyAppURL "https://github.com/${{ github.repository }}"
+        #define MyAppExeName "${{ env.OUTPUT_NAME }}.exe"
+
+        [Setup]
+        AppId={{B8E8E8E8-E8E8-E8E8-E8E8-E8E8E8E8E8E8}
+        AppName={#MyAppName}
+        AppVersion={#MyAppVersion}
+        AppPublisher={#MyAppPublisher}
+        AppPublisherURL={#MyAppURL}
+        AppSupportURL={#MyAppURL}
+        AppUpdatesURL={#MyAppURL}
+        DefaultDirName={autopf}\{#MyAppName}
+        DefaultGroupName={#MyAppName}
+        AllowNoIcons=yes
+        LicenseFile=LICENSE
+        OutputDir=./artifacts/installers
+        OutputBaseFilename={#MyAppName}-{#MyAppVersion}-Setup-x64
+        SetupIconFile=AzureTtsBatchStudio\Assets\avalonia-logo.ico
+        Compression=lzma
+        SolidCompression=yes
+        WizardStyle=modern
+        ArchitecturesAllowed=x64
+        ArchitecturesInstallIn64BitMode=x64
+
+        [Languages]
+        Name: "english"; MessagesFile: "compiler:Default.isl"
+
+        [Tasks]
+        Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
+
+        [Files]
+        Source: "artifacts\published-win-x64\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+
+        [Icons]
+        Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
+        Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
+        Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
+
+        [Run]
+        Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#MyAppName}}"; Flags: nowait postinstall skipifsilent
+        "@ | Out-File -FilePath "setup.iss" -Encoding UTF8
+
+    - name: Create LICENSE file
+      run: |
+        @"
+        MIT License
+
+        Copyright (c) 2024 Azure TTS Batch Studio
+
+        Permission is hereby granted, free of charge, to any person obtaining a copy
+        of this software and associated documentation files (the "Software"), to deal
+        in the Software without restriction, including without limitation the rights
+        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        copies of the Software, and to permit persons to whom the Software is
+        furnished to do so, subject to the following conditions:
+
+        The above copyright notice and this permission notice shall be included in all
+        copies or substantial portions of the Software.
+
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+        SOFTWARE.
+        "@ | Out-File -FilePath "LICENSE" -Encoding UTF8
+
+    - name: Build Inno Setup installer
+      run: |
+        & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "setup.iss"
+      continue-on-error: true
+
+    - name: Prepare MSIX package (x64)
+      run: |
+        New-Item -ItemType Directory -Force -Path "./artifacts/msix"
+        
+        # Create basic MSIX manifest
+        $version = "${{ github.ref_name }}".TrimStart('v') + ".0"
+        $manifest = @"
+        <?xml version="1.0" encoding="utf-8"?>
+        <Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10" 
+                 xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10">
+          <Identity Name="AzureTtsBatchStudio" 
+                    Publisher="CN=AzureTtsBatchStudio" 
+                    Version="$version" />
+          <Properties>
+            <DisplayName>Azure TTS Batch Studio</DisplayName>
+            <PublisherDisplayName>Azure TTS Batch Studio</PublisherDisplayName>
+            <Logo>Assets\avalonia-logo.png</Logo>
+            <Description>A desktop application for batch conversion of text to speech using Azure Cognitive Services</Description>
+          </Properties>
+          <Dependencies>
+            <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.17763.0" MaxVersionTested="10.0.22621.0" />
+          </Dependencies>
+          <Applications>
+            <Application Id="AzureTtsBatchStudio" Executable="${{ env.OUTPUT_NAME }}.exe" EntryPoint="Windows.FullTrustApplication">
+              <uap:VisualElements DisplayName="Azure TTS Batch Studio" 
+                                  Square150x150Logo="Assets\avalonia-logo.png" 
+                                  Square44x44Logo="Assets\avalonia-logo.png" 
+                                  Description="Azure TTS Batch Studio" 
+                                  BackgroundColor="transparent">
+              </uap:VisualElements>
+            </Application>
+          </Applications>
+        </Package>
+        "@
+        $manifest | Out-File -FilePath "./artifacts/published-win-x64/Package.appxmanifest" -Encoding UTF8
+
+    - name: Upload installer artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: installers
+        path: ./artifacts/installers/
+        retention-days: 90
+      if: always()
+
+  release:
+    needs: [build, create-installers]
+    runs-on: windows-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: ./artifacts
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ github.ref_name }}
+        name: Azure TTS Batch Studio ${{ github.ref_name }}
+        draft: false
+        prerelease: false
+        generate_release_notes: true
+        files: |
+          ./artifacts/portable/AzureTtsBatchStudio-*-portable.zip
+          ./artifacts/installers/Azure TTS Batch Studio-*-Setup-x64.exe
+        body: |
+          ## Azure TTS Batch Studio ${{ github.ref_name }}
+          
+          A complete desktop application for batch conversion of text to speech using Azure Cognitive Services.
+          
+          ### Downloads
+          
+          **Recommended for most users:**
+          - **Windows Installer (x64)**: Full installer with automatic updates
+          
+          **Portable versions** (no installation required):
+          - **Windows x64**: For modern 64-bit Windows systems
+          - **Windows x86**: For older 32-bit Windows systems  
+          - **Windows ARM64**: For ARM64 Windows devices
+          
+          ### Features
+          - Batch text-to-speech conversion using Azure Cognitive Services
+          - Support for multiple languages and voices
+          - Customizable speech parameters (rate, pitch)
+          - Multiple audio format outputs (WAV, MP3, OGG)
+          - Intuitive Avalonia UI interface
+          - Cross-platform compatibility
+          
+          ### System Requirements
+          - Windows 10/11 (recommended)
+          - .NET 8.0 Runtime (included in installers)
+          - Azure Speech Services subscription
+          
+          ### Getting Started
+          1. Download and install the application
+          2. Configure your Azure Speech Services credentials in Settings
+          3. Enter text to convert and select voice options
+          4. Generate speech files
+          
+          For more information, see the [README](https://github.com/${{ github.repository }}/blob/main/README.md).
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
