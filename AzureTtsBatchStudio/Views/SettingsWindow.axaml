@@ -1,0 +1,248 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:AzureTtsBatchStudio.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="500"
+        x:Class="AzureTtsBatchStudio.Views.SettingsWindow"
+        x:DataType="vm:SettingsWindowViewModel"
+        Title="Settings - Azure TTS Batch Studio"
+        Width="600"
+        Height="500"
+        MinWidth="500"
+        MinHeight="400"
+        WindowStartupLocation="CenterOwner"
+        Icon="/Assets/avalonia-logo.ico">
+
+    <Design.DataContext>
+        <vm:SettingsWindowViewModel/>
+    </Design.DataContext>
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Settings Content -->
+        <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
+            <StackPanel Spacing="15">
+                
+                <!-- Azure Configuration -->
+                <Border BorderBrush="Gray" BorderThickness="1" Padding="15" CornerRadius="5">
+                    <StackPanel>
+                        <TextBlock Text="Azure Speech Services Configuration" 
+                                   FontWeight="Bold" 
+                                   FontSize="16" 
+                                   Margin="0,0,0,15"/>
+                        
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="150"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <TextBlock Grid.Row="0" Grid.Column="0" 
+                                       Text="Subscription Key:" 
+                                       VerticalAlignment="Center" 
+                                       Margin="0,0,10,10"/>
+                            <TextBox Grid.Row="0" Grid.Column="1" 
+                                     Text="{Binding SubscriptionKey}" 
+                                     PasswordChar="*"
+                                     Watermark="Enter your Azure subscription key"
+                                     Margin="0,0,10,10"/>
+                            
+                            <TextBlock Grid.Row="1" Grid.Column="0" 
+                                       Text="Region:" 
+                                       VerticalAlignment="Center" 
+                                       Margin="0,0,10,10"/>
+                            <TextBox Grid.Row="1" Grid.Column="1" 
+                                     Text="{Binding Region}" 
+                                     Watermark="e.g., eastus, westus2"
+                                     Margin="0,0,10,10"/>
+                            
+                            <Button Grid.Row="2" Grid.Column="1" 
+                                    Content="Test Connection" 
+                                    Command="{Binding TestConnectionCommand}"
+                                    HorizontalAlignment="Left"
+                                    Margin="0,5,0,10"/>
+                            
+                            <TextBlock Grid.Row="3" Grid.Column="1" 
+                                       Text="{Binding ConnectionStatus}" 
+                                       Foreground="{Binding ConnectionStatusColor}"
+                                       Margin="0,0,0,10"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Default Settings -->
+                <Border BorderBrush="Gray" BorderThickness="1" Padding="15" CornerRadius="5">
+                    <StackPanel>
+                        <TextBlock Text="Default Settings" 
+                                   FontWeight="Bold" 
+                                   FontSize="16" 
+                                   Margin="0,0,0,15"/>
+                        
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="150"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <TextBlock Grid.Row="0" Grid.Column="0" 
+                                       Text="Output Directory:" 
+                                       VerticalAlignment="Center" 
+                                       Margin="0,0,10,10"/>
+                            <TextBox Grid.Row="0" Grid.Column="1" 
+                                     Text="{Binding DefaultOutputDirectory}" 
+                                     Margin="0,0,10,10"/>
+                            <Button Grid.Row="0" Grid.Column="2" 
+                                    Content="Browse" 
+                                    Command="{Binding BrowseOutputDirectoryCommand}"
+                                    Margin="0,0,0,10"/>
+                            
+                            <TextBlock Grid.Row="1" Grid.Column="0" 
+                                       Text="Language:" 
+                                       VerticalAlignment="Center" 
+                                       Margin="0,0,10,10"/>
+                            <ComboBox Grid.Row="1" Grid.Column="1" 
+                                      ItemsSource="{Binding AvailableLanguages}"
+                                      SelectedItem="{Binding DefaultLanguage}"
+                                      DisplayMemberBinding="{Binding DisplayName}"
+                                      Margin="0,0,10,10"/>
+                            
+                            <TextBlock Grid.Row="2" Grid.Column="0" 
+                                       Text="Audio Format:" 
+                                       VerticalAlignment="Center" 
+                                       Margin="0,0,10,10"/>
+                            <ComboBox Grid.Row="2" Grid.Column="1" 
+                                      ItemsSource="{Binding AudioFormats}"
+                                      SelectedItem="{Binding DefaultAudioFormat}"
+                                      Margin="0,0,10,10"/>
+                            
+                            <TextBlock Grid.Row="3" Grid.Column="0" 
+                                       Text="Quality:" 
+                                       VerticalAlignment="Center" 
+                                       Margin="0,0,10,10"/>
+                            <ComboBox Grid.Row="3" Grid.Column="1" 
+                                      ItemsSource="{Binding QualityOptions}"
+                                      SelectedItem="{Binding DefaultQuality}"
+                                      Margin="0,0,10,10"/>
+                            
+                            <TextBlock Grid.Row="4" Grid.Column="0" 
+                                       Text="Speaking Rate:" 
+                                       VerticalAlignment="Center" 
+                                       Margin="0,0,10,10"/>
+                            <StackPanel Grid.Row="4" Grid.Column="1" Orientation="Horizontal" Margin="0,0,10,10">
+                                <Slider Value="{Binding DefaultSpeakingRate}" 
+                                        Minimum="0.5" 
+                                        Maximum="2.0" 
+                                        TickFrequency="0.1"
+                                        Width="200"
+                                        Margin="0,0,10,0"/>
+                                <TextBlock Text="{Binding DefaultSpeakingRate, StringFormat='{}{0:F1}x'}" 
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
+                            
+                            <TextBlock Grid.Row="5" Grid.Column="0" 
+                                       Text="Pitch:" 
+                                       VerticalAlignment="Center" 
+                                       Margin="0,0,10,0"/>
+                            <StackPanel Grid.Row="5" Grid.Column="1" Orientation="Horizontal" Margin="0,0,10,0">
+                                <Slider Value="{Binding DefaultPitch}" 
+                                        Minimum="-50" 
+                                        Maximum="50" 
+                                        TickFrequency="5"
+                                        Width="200"
+                                        Margin="0,0,10,0"/>
+                                <TextBlock Text="{Binding DefaultPitch, StringFormat='{}{0:F0}%'}" 
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Advanced Settings -->
+                <Border BorderBrush="Gray" BorderThickness="1" Padding="15" CornerRadius="5">
+                    <StackPanel>
+                        <TextBlock Text="Advanced Settings" 
+                                   FontWeight="Bold" 
+                                   FontSize="16" 
+                                   Margin="0,0,0,15"/>
+                        
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="200"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <TextBlock Grid.Row="0" Grid.Column="0" 
+                                       Text="Max Concurrent Processing:" 
+                                       VerticalAlignment="Center" 
+                                       Margin="0,0,10,10"/>
+                            <NumericUpDown Grid.Row="0" Grid.Column="1" 
+                                           Value="{Binding MaxConcurrentProcessing}" 
+                                           Minimum="1" 
+                                           Maximum="10"
+                                           Width="100"
+                                           HorizontalAlignment="Left"
+                                           Margin="0,0,0,10"/>
+                            
+                            <CheckBox Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                                      Content="Remember last settings" 
+                                      IsChecked="{Binding RememberLastSettings}"
+                                      Margin="0,0,0,10"/>
+                            
+                            <CheckBox Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"
+                                      Content="Show processing details" 
+                                      IsChecked="{Binding ShowProcessingDetails}"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Dialog Buttons -->
+        <StackPanel Grid.Row="1" 
+                    Orientation="Horizontal" 
+                    HorizontalAlignment="Right" 
+                    Margin="0,20,0,0"
+                    Spacing="10">
+            <Button Content="Restore Defaults" 
+                    Command="{Binding RestoreDefaultsCommand}"
+                    Padding="15,8"/>
+            <Button Content="Cancel" 
+                    Command="{Binding CancelCommand}"
+                    Padding="15,8"/>
+            <Button Content="Save" 
+                    Command="{Binding SaveCommand}"
+                    Background="#2E8B57"
+                    Foreground="White"
+                    Padding="15,8"/>
+        </StackPanel>
+    </Grid>
+
+</Window>

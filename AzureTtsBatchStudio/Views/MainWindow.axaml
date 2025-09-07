@@ -3,18 +3,180 @@
         xmlns:vm="using:AzureTtsBatchStudio.ViewModels"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
         x:Class="AzureTtsBatchStudio.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Icon="/Assets/avalonia-logo.ico"
-        Title="AzureTtsBatchStudio">
+        Title="Azure TTS Batch Studio"
+        MinWidth="800"
+        MinHeight="600">
 
     <Design.DataContext>
-        <!-- This only sets the DataContext for the previewer in an IDE,
-             to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
         <vm:MainWindowViewModel/>
     </Design.DataContext>
 
-    <TextBlock Text="{Binding Greeting}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
+            <TextBlock Text="Azure TTS Batch Studio" FontSize="24" FontWeight="Bold" VerticalAlignment="Center"/>
+            <Button Content="Settings" Margin="20,0,0,0" Command="{Binding OpenSettingsCommand}"/>
+        </StackPanel>
+        
+        <!-- Main Content -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="10"/>
+                <ColumnDefinition Width="300"/>
+            </Grid.ColumnDefinitions>
+            
+            <!-- Left Panel - Text Input -->
+            <Grid Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                
+                <TextBlock Grid.Row="0" Text="Text to Convert" FontWeight="Bold" Margin="0,0,0,5"/>
+                
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <TextBox Text="{Binding InputText}" 
+                             AcceptsReturn="True" 
+                             TextWrapping="Wrap" 
+                             MinHeight="300"
+                             Watermark="Enter text to convert to speech..."/>
+                </ScrollViewer>
+                
+                <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,10,0,0">
+                    <Button Content="Load Text File" Command="{Binding LoadTextFileCommand}" Margin="0,0,10,0"/>
+                    <Button Content="Import from CSV" Command="{Binding ImportCsvCommand}" Margin="0,0,10,0"/>
+                    <Button Content="Clear" Command="{Binding ClearTextCommand}"/>
+                </StackPanel>
+            </Grid>
+            
+            <!-- Right Panel - Controls -->
+            <StackPanel Grid.Column="2">
+                <!-- Voice Settings -->
+                <Border BorderBrush="Gray" BorderThickness="1" Padding="10" Margin="0,0,0,10">
+                    <StackPanel>
+                        <TextBlock Text="Voice Settings" FontWeight="Bold" Margin="0,0,0,10"/>
+                        
+                        <TextBlock Text="Language:" Margin="0,0,0,5"/>
+                        <ComboBox ItemsSource="{Binding AvailableLanguages}" 
+                                  SelectedItem="{Binding SelectedLanguage}"
+                                  DisplayMemberBinding="{Binding Name}"
+                                  Margin="0,0,0,10"/>
+                        
+                        <TextBlock Text="Voice:" Margin="0,0,0,5"/>
+                        <ComboBox ItemsSource="{Binding AvailableVoices}" 
+                                  SelectedItem="{Binding SelectedVoice}"
+                                  DisplayMemberBinding="{Binding Name}"
+                                  Margin="0,0,0,10"/>
+                        
+                        <TextBlock Text="Speaking Rate:" Margin="0,0,0,5"/>
+                        <Slider Value="{Binding SpeakingRate}" 
+                                Minimum="0.5" 
+                                Maximum="2.0" 
+                                TickFrequency="0.1"
+                                Margin="0,0,0,5"/>
+                        <TextBlock Text="{Binding SpeakingRate, StringFormat='{}{0:F1}x'}" 
+                                   HorizontalAlignment="Center" 
+                                   Margin="0,0,0,10"/>
+                        
+                        <TextBlock Text="Pitch:" Margin="0,0,0,5"/>
+                        <Slider Value="{Binding Pitch}" 
+                                Minimum="-50" 
+                                Maximum="50" 
+                                TickFrequency="5"
+                                Margin="0,0,0,5"/>
+                        <TextBlock Text="{Binding Pitch, StringFormat='{}{0:F0}%'}" 
+                                   HorizontalAlignment="Center" 
+                                   Margin="0,0,0,10"/>
+                    </StackPanel>
+                </Border>
+                
+                <!-- Output Settings -->
+                <Border BorderBrush="Gray" BorderThickness="1" Padding="10" Margin="0,0,0,10">
+                    <StackPanel>
+                        <TextBlock Text="Output Settings" FontWeight="Bold" Margin="0,0,0,10"/>
+                        
+                        <TextBlock Text="Audio Format:" Margin="0,0,0,5"/>
+                        <ComboBox ItemsSource="{Binding AudioFormats}" 
+                                  SelectedItem="{Binding SelectedAudioFormat}"
+                                  Margin="0,0,0,10"/>
+                        
+                        <TextBlock Text="Quality:" Margin="0,0,0,5"/>
+                        <ComboBox ItemsSource="{Binding QualityOptions}" 
+                                  SelectedItem="{Binding SelectedQuality}"
+                                  Margin="0,0,0,10"/>
+                        
+                        <TextBlock Text="Output Directory:" Margin="0,0,0,5"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox Grid.Column="0" Text="{Binding OutputDirectory}" Margin="0,0,5,0"/>
+                            <Button Grid.Column="1" Content="Browse" Command="{Binding BrowseOutputDirectoryCommand}"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+                
+                <!-- Actions -->
+                <StackPanel>
+                    <Button Content="Generate Speech" 
+                            Command="{Binding GenerateSpeechCommand}"
+                            IsEnabled="{Binding !IsProcessing}"
+                            Margin="0,0,0,10"
+                            Background="#2E8B57"
+                            Foreground="White"
+                            Padding="10,8"/>
+                    
+                    <Button Content="Preview Selected Voice" 
+                            Command="{Binding PreviewVoiceCommand}"
+                            IsEnabled="{Binding !IsProcessing}"
+                            Margin="0,0,0,10"/>
+                    
+                    <Button Content="Stop Processing" 
+                            Command="{Binding StopProcessingCommand}"
+                            IsEnabled="{Binding IsProcessing}"
+                            Background="#DC143C"
+                            Foreground="White"/>
+                </StackPanel>
+            </StackPanel>
+        </Grid>
+        
+        <!-- Status Bar -->
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            
+            <StackPanel Grid.Column="0" Orientation="Horizontal">
+                <TextBlock Text="{Binding StatusMessage}" VerticalAlignment="Center"/>
+                <ProgressBar Value="{Binding ProgressValue}" 
+                             Maximum="100" 
+                             Width="200" 
+                             Height="20" 
+                             Margin="10,0,0,0"
+                             IsVisible="{Binding IsProcessing}"/>
+            </StackPanel>
+            
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <TextBlock Text="Files processed: " VerticalAlignment="Center"/>
+                <TextBlock Text="{Binding ProcessedCount}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                <TextBlock Text="Total: " VerticalAlignment="Center"/>
+                <TextBlock Text="{Binding TotalCount}" VerticalAlignment="Center"/>
+            </StackPanel>
+        </Grid>
+    </Grid>
 
 </Window>

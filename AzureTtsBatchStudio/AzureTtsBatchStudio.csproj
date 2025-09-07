@@ -6,6 +6,25 @@
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    
+    <!-- Application Information -->
+    <AssemblyTitle>Azure TTS Batch Studio</AssemblyTitle>
+    <AssemblyDescription>A desktop application for batch conversion of text to speech using Azure Cognitive Services</AssemblyDescription>
+    <AssemblyCompany>Azure TTS Batch Studio</AssemblyCompany>
+    <AssemblyProduct>Azure TTS Batch Studio</AssemblyProduct>
+    <AssemblyCopyright>Copyright © 2024</AssemblyCopyright>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <Version>1.0.0</Version>
+    
+    <!-- MSIX Packaging -->
+    <WindowsPackageType>MSIX</WindowsPackageType>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <SelfContained>true</SelfContained>
+    <RuntimeIdentifiers>win-x64;win-x86;win-arm64</RuntimeIdentifiers>
+    
+    <!-- Application Icon -->
+    <ApplicationIcon>Assets\avalonia-logo.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -24,5 +43,6 @@
       <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
     </PackageReference>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.1" />
+    <PackageReference Include="Microsoft.CognitiveServices.Speech" Version="1.37.0" />
   </ItemGroup>
 </Project>
