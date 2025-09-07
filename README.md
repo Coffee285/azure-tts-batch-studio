@@ -56,24 +56,35 @@ A comprehensive desktop application for batch conversion of text to speech using
 
 ## Installation
 
-### Option 1: Windows Installer (Recommended)
-1. Download the latest installer from [Releases](https://github.com/Saiyan9001/azure-tts-batch-studio/releases)
-2. Run the `Azure-TTS-Batch-Studio-Setup-x64.exe` installer
-3. Follow the installation wizard
-4. Launch from Start Menu or Desktop shortcut
+### ⚡ Super Easy Installation for Windows 11 (Recommended)
 
-### Option 2: MSIX Package
+**Option 1: Portable Version (No Installation Required)**
+1. Download: `AzureTtsBatchStudio-x64-portable.zip` from [Releases](https://github.com/Saiyan9001/azure-tts-batch-studio/releases) (51MB)
+2. Extract to any folder (Desktop, Documents, etc.)
+3. Double-click `AzureTtsBatchStudio.exe` to run
+4. That's it! No installation, no admin rights needed.
+
+**Option 2: Windows Installer (Traditional)**
+1. Download: `Azure-TTS-Batch-Studio-Setup-x64.exe` from [Releases](https://github.com/Saiyan9001/azure-tts-batch-studio/releases)
+2. Double-click the installer and follow the wizard
+3. Launch from Start Menu or Desktop shortcut
+
+### Other Installation Options
+
+**Option 3: MSIX Package**
 1. Download the MSIX package from [Releases](https://github.com/Saiyan9001/azure-tts-batch-studio/releases)
 2. Double-click to install (requires Windows 10/11)
 3. Launch from Start Menu
 
-### Option 3: Portable Version
-1. Download the portable ZIP file for your architecture:
-   - `AzureTtsBatchStudio-x64-portable.zip` (64-bit Windows)
-   - `AzureTtsBatchStudio-x86-portable.zip` (32-bit Windows)
-   - `AzureTtsBatchStudio-arm64-portable.zip` (ARM64 Windows)
-2. Extract to your preferred directory
-3. Run `AzureTtsBatchStudio.exe`
+**Option 4: Build from Source**
+```bash
+# Clone and build
+git clone https://github.com/Saiyan9001/azure-tts-batch-studio.git
+cd azure-tts-batch-studio
+build.bat  # On Windows
+# or
+./build.sh  # On Linux/macOS
+```
 
 ## Configuration
 
@@ -265,6 +276,23 @@ The project uses GitHub Actions for automated building and releasing:
 - Try different quality settings
 - Verify the selected audio format
 - Check Azure service quotas
+
+**Windows 11 Specific Issues:**
+
+**"Windows protected your PC" warning**
+- Click "More info" then "Run anyway"
+- This happens with new unsigned applications
+- Add the folder to Windows Defender exceptions if needed
+
+**"App won't start" on Windows 11**
+- Ensure you downloaded the x64 version for modern PCs
+- Try running as administrator
+- Check if .NET runtime is properly installed
+
+**"Missing DLL" errors**
+- Use the self-contained portable version (includes all dependencies)
+- Avoid extracting to OneDrive/cloud folders initially
+- Make sure antivirus isn't blocking files
 
 ### Getting Help
 - Review the [FAQ](https://github.com/Saiyan9001/azure-tts-batch-studio/wiki/FAQ)
