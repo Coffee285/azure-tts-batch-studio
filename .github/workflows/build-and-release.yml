@@ -45,11 +45,7 @@ jobs:
 
     - name: Build application
       run: |
-        dotnet build ${{ env.PROJECT_PATH }} \
-          --configuration ${{ matrix.configuration }} \
-          --runtime win-${{ matrix.platform }} \
-          --no-restore \
-          --verbosity minimal
+        dotnet build ${{ env.PROJECT_PATH }} --configuration ${{ matrix.configuration }} --runtime win-${{ matrix.platform }} --no-restore --verbosity minimal
 
     - name: Run tests
       run: |
@@ -61,15 +57,7 @@ jobs:
 
     - name: Publish self-contained application
       run: |
-        dotnet publish ${{ env.PROJECT_PATH }} \
-          --configuration ${{ matrix.configuration }} \
-          --runtime win-${{ matrix.platform }} \
-          --self-contained true \
-          --output "./publish/win-${{ matrix.platform }}" \
-          --verbosity minimal \
-          -p:PublishSingleFile=false \
-          -p:PublishReadyToRun=true \
-          -p:IncludeNativeLibrariesForSelfExtract=true
+        dotnet publish ${{ env.PROJECT_PATH }} --configuration ${{ matrix.configuration }} --runtime win-${{ matrix.platform }} --self-contained true --output "./publish/win-${{ matrix.platform }}" --verbosity minimal -p:PublishSingleFile=false -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true
 
     - name: Create portable package
       run: |
