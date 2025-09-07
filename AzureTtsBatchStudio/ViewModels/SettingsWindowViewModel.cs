@@ -293,6 +293,12 @@ namespace AzureTtsBatchStudio.ViewModels
             MaxConcurrentProcessing = 3;
             ShowProcessingDetails = true;
             
+            // UI Preferences
+            SelectedTheme = "Default";
+            SelectedFontSize = "Medium";
+            SelectedFontFamily = "Segoe UI";
+            SelectedLayoutStyle = "Standard";
+            
             ConnectionStatus = "Settings restored to defaults";
             ConnectionStatusColor = Brushes.Green;
         }
