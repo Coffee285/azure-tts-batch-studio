@@ -19,6 +19,12 @@ namespace AzureTtsBatchStudio.Services
         public bool RememberLastSettings { get; set; } = true;
         public int MaxConcurrentProcessing { get; set; } = 3;
         public bool ShowProcessingDetails { get; set; } = true;
+        
+        // UI Preferences
+        public string ThemeVariant { get; set; } = "Default"; // "Light", "Dark", "Default"
+        public string FontSize { get; set; } = "Medium"; // "Small", "Medium", "Large"
+        public string FontFamily { get; set; } = "Segoe UI"; // "Segoe UI", "Calibri", "Arial"
+        public string LayoutStyle { get; set; } = "Standard"; // "Compact", "Standard", "Spacious"
     }
 
     public interface ISettingsService

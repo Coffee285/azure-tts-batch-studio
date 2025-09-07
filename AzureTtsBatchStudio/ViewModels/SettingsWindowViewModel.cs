@@ -73,6 +73,31 @@ namespace AzureTtsBatchStudio.ViewModels
         [ObservableProperty]
         private bool _isTesting = false;
 
+        // UI Preferences
+        [ObservableProperty]
+        private ObservableCollection<string> _themeOptions = new() { "Light", "Dark", "Default" };
+
+        [ObservableProperty]
+        private string _selectedTheme = "Default";
+
+        [ObservableProperty]
+        private ObservableCollection<string> _fontSizeOptions = new() { "Small", "Medium", "Large" };
+
+        [ObservableProperty]
+        private string _selectedFontSize = "Medium";
+
+        [ObservableProperty]
+        private ObservableCollection<string> _fontFamilyOptions = new() { "Segoe UI", "Calibri", "Arial", "Consolas" };
+
+        [ObservableProperty]
+        private string _selectedFontFamily = "Segoe UI";
+
+        [ObservableProperty]
+        private ObservableCollection<string> _layoutStyleOptions = new() { "Compact", "Standard", "Spacious" };
+
+        [ObservableProperty]
+        private string _selectedLayoutStyle = "Standard";
+
         public event EventHandler? SettingsSaved;
         public event EventHandler? Cancelled;
 
@@ -105,6 +130,12 @@ namespace AzureTtsBatchStudio.ViewModels
                 RememberLastSettings = _originalSettings.RememberLastSettings;
                 MaxConcurrentProcessing = _originalSettings.MaxConcurrentProcessing;
                 ShowProcessingDetails = _originalSettings.ShowProcessingDetails;
+                
+                // Load UI preferences
+                SelectedTheme = _originalSettings.ThemeVariant;
+                SelectedFontSize = _originalSettings.FontSize;
+                SelectedFontFamily = _originalSettings.FontFamily;
+                SelectedLayoutStyle = _originalSettings.LayoutStyle;
 
                 // Load available languages if credentials are configured
                 if (!string.IsNullOrEmpty(SubscriptionKey) && !string.IsNullOrEmpty(Region))
@@ -262,6 +293,12 @@ namespace AzureTtsBatchStudio.ViewModels
             MaxConcurrentProcessing = 3;
             ShowProcessingDetails = true;
             
+            // UI Preferences
+            SelectedTheme = "Default";
+            SelectedFontSize = "Medium";
+            SelectedFontFamily = "Segoe UI";
+            SelectedLayoutStyle = "Standard";
+            
             ConnectionStatus = "Settings restored to defaults";
             ConnectionStatusColor = Brushes.Green;
         }
@@ -283,10 +320,21 @@ namespace AzureTtsBatchStudio.ViewModels
                     DefaultPitch = DefaultPitch,
                     RememberLastSettings = RememberLastSettings,
                     MaxConcurrentProcessing = MaxConcurrentProcessing,
-                    ShowProcessingDetails = ShowProcessingDetails
+                    ShowProcessingDetails = ShowProcessingDetails,
+                    // UI Preferences
+                    ThemeVariant = SelectedTheme,
+                    FontSize = SelectedFontSize,
+                    FontFamily = SelectedFontFamily,
+                    LayoutStyle = SelectedLayoutStyle
                 };
 
                 await _settingsService.SaveSettingsAsync(settings);
+                
+                // Apply theme immediately
+                if (Application.Current is App app)
+                {
+                    app.ApplyTheme(settings.ThemeVariant);
+                }
                 
                 // Configure the TTS service with new credentials
                 if (!string.IsNullOrEmpty(settings.AzureSubscriptionKey) && !string.IsNullOrEmpty(settings.AzureRegion))

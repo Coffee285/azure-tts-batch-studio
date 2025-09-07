@@ -6,6 +6,8 @@ using System.Linq;
 using Avalonia.Markup.Xaml;
 using AzureTtsBatchStudio.ViewModels;
 using AzureTtsBatchStudio.Views;
+using AzureTtsBatchStudio.Services;
+using Avalonia.Styling;
 
 namespace AzureTtsBatchStudio;
 
@@ -16,13 +18,19 @@ public partial class App : Application
         AvaloniaXamlLoader.Load(this);
     }
 
-    public override void OnFrameworkInitializationCompleted()
+    public override async void OnFrameworkInitializationCompleted()
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             // Avoid duplicate validations from both Avalonia and the CommunityToolkit. 
             // More info: https://docs.avaloniaui.net/docs/guides/development-guides/data-validation#manage-validationplugins
             DisableAvaloniaDataAnnotationValidation();
+            
+            // Load settings to apply theme
+            var settingsService = new SettingsService();
+            var settings = await settingsService.LoadSettingsAsync();
+            ApplyTheme(settings.ThemeVariant);
+            
             desktop.MainWindow = new MainWindow
             {
                 DataContext = new MainWindowViewModel(),
@@ -30,6 +38,16 @@ public partial class App : Application
         }
 
         base.OnFrameworkInitializationCompleted();
+    }
+
+    public void ApplyTheme(string themeVariant)
+    {
+        RequestedThemeVariant = themeVariant switch
+        {
+            "Light" => ThemeVariant.Light,
+            "Dark" => ThemeVariant.Dark,
+            _ => ThemeVariant.Default
+        };
     }
 
     private void DisableAvaloniaDataAnnotationValidation()
