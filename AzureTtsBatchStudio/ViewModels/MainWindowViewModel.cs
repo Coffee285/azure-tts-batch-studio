@@ -122,7 +122,8 @@ namespace AzureTtsBatchStudio.ViewModels
             {
                 if (!_ttsService.IsConfigured)
                 {
-                    StatusMessage = "Azure TTS not configured. Please check settings.";
+                    StatusMessage = "Azure TTS not configured. Loading default languages...";
+                    AddDefaultLanguages();
                     return;
                 }
 
@@ -143,8 +144,102 @@ namespace AzureTtsBatchStudio.ViewModels
             }
             catch (Exception ex)
             {
-                StatusMessage = $"Error loading languages: {ex.Message}";
+                StatusMessage = $"Error loading languages: {ex.Message}. Loading default languages...";
+                AddDefaultLanguages();
             }
+        }
+
+        private void AddDefaultLanguages()
+        {
+            var defaultLanguages = new List<LanguageInfo>
+            {
+                new() { Code = "en-US", Name = "en-US", DisplayName = "English (United States)" },
+                new() { Code = "en-GB", Name = "en-GB", DisplayName = "English (United Kingdom)" },
+                new() { Code = "es-ES", Name = "es-ES", DisplayName = "Spanish (Spain)" },
+                new() { Code = "fr-FR", Name = "fr-FR", DisplayName = "French (France)" },
+                new() { Code = "de-DE", Name = "de-DE", DisplayName = "German (Germany)" },
+                new() { Code = "it-IT", Name = "it-IT", DisplayName = "Italian (Italy)" },
+                new() { Code = "pt-BR", Name = "pt-BR", DisplayName = "Portuguese (Brazil)" },
+                new() { Code = "ja-JP", Name = "ja-JP", DisplayName = "Japanese (Japan)" },
+                new() { Code = "ko-KR", Name = "ko-KR", DisplayName = "Korean (Korea)" },
+                new() { Code = "zh-CN", Name = "zh-CN", DisplayName = "Chinese (Mandarin, Simplified)" }
+            };
+
+            AvailableLanguages.Clear();
+            foreach (var language in defaultLanguages)
+            {
+                AvailableLanguages.Add(language);
+            }
+
+            // Set default language
+            SelectedLanguage = AvailableLanguages.FirstOrDefault(l => l.Code == _currentSettings.DefaultLanguage) 
+                              ?? AvailableLanguages.FirstOrDefault();
+                              
+            // Also load default voices for the selected language
+            if (SelectedLanguage != null)
+            {
+                AddDefaultVoicesForLanguage(SelectedLanguage.Code);
+            }
+        }
+
+        private void AddDefaultVoicesForLanguage(string languageCode)
+        {
+            var defaultVoices = new List<VoiceInfo>();
+            
+            switch (languageCode)
+            {
+                case "en-US":
+                    defaultVoices.AddRange(new[]
+                    {
+                        new VoiceInfo { Name = "en-US-AriaNeural", DisplayName = "Aria", Language = "English (US)", Gender = "Female", Locale = "en-US", VoiceType = "Neural" },
+                        new VoiceInfo { Name = "en-US-DavisNeural", DisplayName = "Davis", Language = "English (US)", Gender = "Male", Locale = "en-US", VoiceType = "Neural" },
+                        new VoiceInfo { Name = "en-US-JennyNeural", DisplayName = "Jenny", Language = "English (US)", Gender = "Female", Locale = "en-US", VoiceType = "Neural" },
+                        new VoiceInfo { Name = "en-US-GuyNeural", DisplayName = "Guy", Language = "English (US)", Gender = "Male", Locale = "en-US", VoiceType = "Neural" }
+                    });
+                    break;
+                case "en-GB":
+                    defaultVoices.AddRange(new[]
+                    {
+                        new VoiceInfo { Name = "en-GB-SoniaNeural", DisplayName = "Sonia", Language = "English (UK)", Gender = "Female", Locale = "en-GB", VoiceType = "Neural" },
+                        new VoiceInfo { Name = "en-GB-RyanNeural", DisplayName = "Ryan", Language = "English (UK)", Gender = "Male", Locale = "en-GB", VoiceType = "Neural" }
+                    });
+                    break;
+                case "es-ES":
+                    defaultVoices.AddRange(new[]
+                    {
+                        new VoiceInfo { Name = "es-ES-ElviraNeural", DisplayName = "Elvira", Language = "Spanish (Spain)", Gender = "Female", Locale = "es-ES", VoiceType = "Neural" },
+                        new VoiceInfo { Name = "es-ES-AlvaroNeural", DisplayName = "Alvaro", Language = "Spanish (Spain)", Gender = "Male", Locale = "es-ES", VoiceType = "Neural" }
+                    });
+                    break;
+                case "fr-FR":
+                    defaultVoices.AddRange(new[]
+                    {
+                        new VoiceInfo { Name = "fr-FR-DeniseNeural", DisplayName = "Denise", Language = "French (France)", Gender = "Female", Locale = "fr-FR", VoiceType = "Neural" },
+                        new VoiceInfo { Name = "fr-FR-HenriNeural", DisplayName = "Henri", Language = "French (France)", Gender = "Male", Locale = "fr-FR", VoiceType = "Neural" }
+                    });
+                    break;
+                case "de-DE":
+                    defaultVoices.AddRange(new[]
+                    {
+                        new VoiceInfo { Name = "de-DE-KatjaNeural", DisplayName = "Katja", Language = "German (Germany)", Gender = "Female", Locale = "de-DE", VoiceType = "Neural" },
+                        new VoiceInfo { Name = "de-DE-ConradNeural", DisplayName = "Conrad", Language = "German (Germany)", Gender = "Male", Locale = "de-DE", VoiceType = "Neural" }
+                    });
+                    break;
+                default:
+                    // Fallback voices for other languages
+                    defaultVoices.Add(new VoiceInfo { Name = $"{languageCode}-Neural1", DisplayName = "Default Voice", Language = languageCode, Gender = "Female", Locale = languageCode, VoiceType = "Neural" });
+                    break;
+            }
+
+            AvailableVoices.Clear();
+            foreach (var voice in defaultVoices)
+            {
+                AvailableVoices.Add(voice);
+            }
+
+            // Set default voice
+            SelectedVoice = AvailableVoices.FirstOrDefault(v => v.Name == _currentSettings.DefaultVoice) 
+                           ?? AvailableVoices.FirstOrDefault();
         }
 
         partial void OnSelectedLanguageChanged(LanguageInfo? value)
@@ -160,7 +255,11 @@ namespace AzureTtsBatchStudio.ViewModels
             try
             {
                 if (!_ttsService.IsConfigured)
+                {
+                    StatusMessage = $"Loading default voices for {locale}...";
+                    AddDefaultVoicesForLanguage(locale);
                     return;
+                }
 
                 StatusMessage = $"Loading voices for {locale}...";
                 var voices = await _ttsService.GetAvailableVoicesAsync(locale);
@@ -179,7 +278,8 @@ namespace AzureTtsBatchStudio.ViewModels
             }
             catch (Exception ex)
             {
-                StatusMessage = $"Error loading voices: {ex.Message}";
+                StatusMessage = $"Error loading voices: {ex.Message}. Loading default voices...";
+                AddDefaultVoicesForLanguage(locale);
             }
         }
 
