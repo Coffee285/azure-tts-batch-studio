@@ -57,7 +57,9 @@ Name: "quicklaunchicon"; Description: "{cm:CreateQuickLaunchIcon}"; GroupDescrip
 Name: "associatefiles"; Description: "&Associate text files with {#MyAppName}"; GroupDescription: "File associations:"; Flags: unchecked
 
 [Files]
-Source: "publish\win-x64\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "publish\win-x64\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: DirExists('publish\win-x64')
+; Fallback to local build if publish directory doesn't exist
+Source: "AzureTtsBatchStudio\bin\Release\net8.0\win-x64\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: not DirExists('publish\win-x64')
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Registry]
