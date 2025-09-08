@@ -57,7 +57,7 @@ public partial class App : Application
                 catch (Exception themeEx)
                 {
                     Console.WriteLine($"Warning: Failed to apply theme, using default. Error: {themeEx.Message}");
-                    ApplyTheme("Default"); // Fallback to default theme
+                    ApplyTheme("Light"); // Fallback to light theme
                 }
                 
                 Console.WriteLine("Creating main window...");
