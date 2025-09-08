@@ -11,20 +11,32 @@ sealed class Program
     [STAThread]
     public static void Main(string[] args)
     {
+        Console.WriteLine("Azure TTS Batch Studio starting...");
+        Console.WriteLine($"Arguments: {string.Join(" ", args)}");
+        
         try
         {
-            BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
+            Console.WriteLine("Building Avalonia app...");
+            var app = BuildAvaloniaApp();
+            Console.WriteLine("Starting with classic desktop lifetime...");
+            app.StartWithClassicDesktopLifetime(args);
         }
         catch (Exception ex) when (IsDisplayException(ex))
         {
+            Console.WriteLine($"Display exception caught: {ex.Message}");
             HandleDisplayError(ex);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"An unexpected error occurred: {ex.Message}");
+            Console.WriteLine($"CRITICAL ERROR: An unexpected error occurred: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
             Console.WriteLine("Please check the application logs for more details.");
+            Console.WriteLine("Press any key to exit...");
+            Console.ReadKey();
             Environment.Exit(1);
         }
+        
+        Console.WriteLine("Application exiting normally.");
     }
 
     private static bool IsDisplayException(Exception ex)

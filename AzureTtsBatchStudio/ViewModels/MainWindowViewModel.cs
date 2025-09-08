@@ -84,19 +84,55 @@ namespace AzureTtsBatchStudio.ViewModels
             _ttsService = ttsService;
             _settingsService = settingsService;
             
-            _ = InitializeAsync();
+            // Set initial status message
+            StatusMessage = "Initializing application...";
+            
+            // Initialize async but handle exceptions properly with timeout
+            // Use ConfigureAwait(false) to avoid deadlocks
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    // Add timeout to prevent hanging
+                    using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+                    await InitializeAsync().WaitAsync(cts.Token).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    Console.WriteLine("MainWindowViewModel initialization timed out after 30 seconds");
+                    StatusMessage = "Initialization timed out. Application may not function properly.";
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error during MainWindowViewModel initialization: {ex.Message}");
+                    Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                    // Update status message on UI thread
+                    StatusMessage = $"Initialization error: {ex.Message}";
+                }
+            });
         }
 
         private async Task InitializeAsync()
         {
-            await LoadSettingsAsync();
-            await LoadAvailableLanguagesAsync();
+            try
+            {
+                Console.WriteLine("Starting MainWindowViewModel initialization...");
+                await LoadSettingsAsync();
+                await LoadAvailableLanguagesAsync();
+                Console.WriteLine("MainWindowViewModel initialization completed successfully.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in InitializeAsync: {ex.Message}");
+                throw; // Re-throw to be caught by the outer try-catch
+            }
         }
 
         private async Task LoadSettingsAsync()
         {
             try
             {
+                Console.WriteLine("Loading application settings...");
                 _currentSettings = await _settingsService.LoadSettingsAsync();
                 OutputDirectory = _currentSettings.DefaultOutputDirectory;
                 SpeakingRate = _currentSettings.DefaultSpeakingRate;
@@ -108,11 +144,20 @@ namespace AzureTtsBatchStudio.ViewModels
                     !string.IsNullOrEmpty(_currentSettings.AzureRegion))
                 {
                     _ttsService.ConfigureConnection(_currentSettings.AzureSubscriptionKey, _currentSettings.AzureRegion);
+                    Console.WriteLine("Azure TTS service configured with saved credentials.");
                 }
+                else
+                {
+                    Console.WriteLine("Azure TTS service not configured - no saved credentials found.");
+                }
+                
+                Console.WriteLine("Settings loaded successfully.");
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"Error loading settings: {ex.Message}");
                 StatusMessage = $"Error loading settings: {ex.Message}";
+                // Don't re-throw here, allow the app to continue with defaults
             }
         }
 
@@ -122,11 +167,13 @@ namespace AzureTtsBatchStudio.ViewModels
             {
                 if (!_ttsService.IsConfigured)
                 {
+                    Console.WriteLine("Azure TTS not configured. Loading default languages...");
                     StatusMessage = "Azure TTS not configured. Loading default languages...";
                     AddDefaultLanguages();
                     return;
                 }
 
+                Console.WriteLine("Loading available languages from Azure TTS...");
                 StatusMessage = "Loading available languages...";
                 var languages = await _ttsService.GetAvailableLanguagesAsync();
                 
@@ -140,12 +187,15 @@ namespace AzureTtsBatchStudio.ViewModels
                 SelectedLanguage = AvailableLanguages.FirstOrDefault(l => l.Code == _currentSettings.DefaultLanguage) 
                                    ?? AvailableLanguages.FirstOrDefault();
 
+                Console.WriteLine($"Loaded {languages.Count} languages from Azure TTS.");
                 StatusMessage = $"Loaded {languages.Count} languages";
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"Error loading languages from Azure TTS: {ex.Message}");
                 StatusMessage = $"Error loading languages: {ex.Message}. Loading default languages...";
                 AddDefaultLanguages();
+                // Don't re-throw here, allow the app to continue with defaults
             }
         }
 
@@ -534,7 +584,8 @@ namespace AzureTtsBatchStudio.ViewModels
                     settingsWindow.Close();
                 };
 
-                if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+                if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop && 
+                    desktop.MainWindow != null)
                 {
                     await settingsWindow.ShowDialog(desktop.MainWindow);
                 }
