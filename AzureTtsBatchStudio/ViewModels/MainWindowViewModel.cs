@@ -342,7 +342,7 @@ namespace AzureTtsBatchStudio.ViewModels
         {
             if (value != null)
             {
-                _ = Task.Run(async () => await LoadVoicesForLanguageAsync(value.Code));
+                _ = LoadVoicesForLanguageAsync(value.Code);
             }
         }
 
