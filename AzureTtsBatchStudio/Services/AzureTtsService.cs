@@ -129,15 +129,10 @@ namespace AzureTtsBatchStudio.Services
                 {
                     using var synthesizer = new SpeechSynthesizer(config, audioConfig);
                     
-                    SpeechSynthesisResult result;
-                    if (request.Format.Name.ToUpperInvariant() == "WAV")
-                    {
-                        result = await synthesizer.SpeakSsmlAsync(ssml);
-                    }
-                    else
+                    SpeechSynthesisResult result = await synthesizer.SpeakSsmlAsync(ssml);
+                    if (request.Format.Name.ToUpperInvariant() != "WAV")
                     {
                         // For MP3 and OGG, we need to get the audio data and write it to file
-                        result = await synthesizer.SpeakSsmlAsync(ssml);
                         if (result.Reason == ResultReason.SynthesizingAudioCompleted && result.AudioData.Length > 0)
                         {
                             await File.WriteAllBytesAsync(request.OutputFileName, result.AudioData);
