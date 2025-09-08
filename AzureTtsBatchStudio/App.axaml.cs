@@ -43,7 +43,7 @@ public partial class App : Application
                 {
                     var settingsService = new SettingsService();
                     // Load settings synchronously to avoid async void issues
-                    settings = Task.Run(async () => await settingsService.LoadSettingsAsync()).Result;
+                    settings = Task.Run(async () => await settingsService.LoadSettingsAsync()).GetAwaiter().GetResult();
                     Console.WriteLine($"Settings loaded successfully. Theme: {settings.ThemeVariant}");
                 }
                 catch (Exception settingsEx)
