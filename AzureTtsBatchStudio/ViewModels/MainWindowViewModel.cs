@@ -87,13 +87,20 @@ namespace AzureTtsBatchStudio.ViewModels
             // Set initial status message
             StatusMessage = "Initializing application...";
             
-            // Initialize async but handle exceptions properly
+            // Initialize async but handle exceptions properly with timeout
             // Use ConfigureAwait(false) to avoid deadlocks
             _ = Task.Run(async () =>
             {
                 try
                 {
-                    await InitializeAsync().ConfigureAwait(false);
+                    // Add timeout to prevent hanging
+                    using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+                    await InitializeAsync().WaitAsync(cts.Token).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    Console.WriteLine("MainWindowViewModel initialization timed out after 30 seconds");
+                    StatusMessage = "Initialization timed out. Application may not function properly.";
                 }
                 catch (Exception ex)
                 {

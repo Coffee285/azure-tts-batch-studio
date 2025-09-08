@@ -37,9 +37,28 @@ public partial class App : Application
                 // Load settings to apply theme
                 Console.WriteLine("Loading application settings...");
                 var settingsService = new SettingsService();
-                var settings = await settingsService.LoadSettingsAsync();
-                ApplyTheme(settings.ThemeVariant);
-                Console.WriteLine($"Theme applied: {settings.ThemeVariant}");
+                AppSettings settings;
+                try
+                {
+                    settings = await settingsService.LoadSettingsAsync();
+                    Console.WriteLine($"Settings loaded successfully. Theme: {settings.ThemeVariant}");
+                }
+                catch (Exception settingsEx)
+                {
+                    Console.WriteLine($"Warning: Failed to load settings, using defaults. Error: {settingsEx.Message}");
+                    settings = new AppSettings(); // Use default settings
+                }
+                
+                try
+                {
+                    ApplyTheme(settings.ThemeVariant);
+                    Console.WriteLine($"Theme applied: {settings.ThemeVariant}");
+                }
+                catch (Exception themeEx)
+                {
+                    Console.WriteLine($"Warning: Failed to apply theme, using default. Error: {themeEx.Message}");
+                    ApplyTheme("Default"); // Fallback to default theme
+                }
                 
                 Console.WriteLine("Creating main window...");
                 var mainWindow = new MainWindow

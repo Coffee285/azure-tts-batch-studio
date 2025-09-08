@@ -8,8 +8,11 @@
         x:DataType="vm:MainWindowViewModel"
         Icon="/Assets/avalonia-logo.ico"
         Title="Azure TTS Batch Studio"
+        Width="1200"
+        Height="800"
         MinWidth="900"
         MinHeight="700"
+        WindowStartupLocation="CenterScreen"
         FontFamily="{StaticResource PrimaryFont}">
 
     <Design.DataContext>
