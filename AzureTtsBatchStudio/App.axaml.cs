@@ -43,7 +43,7 @@ public partial class App : Application
         catch (Exception ex)
         {
             // Log the error - in a real application you might want to use a proper logging framework
-            Console.WriteLine($"Error during application initialization: {ex}");
+            Console.WriteLine($"Error during application initialization: {ex.Message}");
             
             // If we can't initialize the main window, we should terminate gracefully
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
