@@ -158,7 +158,6 @@
                                        Margin="0,0,0,6"/>
                             <ComboBox Grid.Row="1" ItemsSource="{Binding AvailableLanguages}" 
                                       SelectedItem="{Binding SelectedLanguage}"
-                                      DisplayMemberBinding="{Binding DisplayName}"
                                       BorderBrush="{DynamicResource TextControlElevationBorderBrush}"
                                       BorderThickness="1"
                                       CornerRadius="4"
@@ -173,7 +172,6 @@
                                        Margin="0,0,0,6"/>
                             <ComboBox Grid.Row="3" ItemsSource="{Binding AvailableVoices}" 
                                       SelectedItem="{Binding SelectedVoice}"
-                                      DisplayMemberBinding="{Binding ToString}"
                                       BorderBrush="{DynamicResource TextControlElevationBorderBrush}"
                                       BorderThickness="1"
                                       CornerRadius="4"

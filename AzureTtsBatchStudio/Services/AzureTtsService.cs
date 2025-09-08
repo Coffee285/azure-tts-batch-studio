@@ -109,14 +109,49 @@ namespace AzureTtsBatchStudio.Services
                 var config = SpeechConfig.FromSubscription(subscriptionKey, region);
                 config.SpeechSynthesisVoiceName = request.Voice.Name;
                 
+                // Set the appropriate output format based on the request
+                SetSpeechSynthesisOutputFormat(config, request.Format, request.Quality);
+                
                 var ssml = GenerateSsml(request.Text, request.Voice.Name, request.SpeakingRate, request.Pitch);
                 
-                using var audioConfig = AudioConfig.FromWavFileOutput(request.OutputFileName);
-                using var synthesizer = new SpeechSynthesizer(config, audioConfig);
+                // Use the appropriate audio config method based on the format
+                AudioConfig audioConfig;
+                if (request.Format.Name.ToUpperInvariant() == "WAV")
+                {
+                    audioConfig = AudioConfig.FromWavFileOutput(request.OutputFileName);
+                }
+                else
+                {
+                    audioConfig = AudioConfig.FromDefaultSpeakerOutput();
+                }
                 
-                var result = await synthesizer.SpeakSsmlAsync(ssml);
-                
-                return result.Reason == ResultReason.SynthesizingAudioCompleted;
+                using (audioConfig)
+                {
+                    using var synthesizer = new SpeechSynthesizer(config, audioConfig);
+                    
+                    SpeechSynthesisResult result = await synthesizer.SpeakSsmlAsync(ssml);
+                    if (request.Format.Name.ToUpperInvariant() != "WAV")
+                    {
+                        // For MP3 and OGG, we need to get the audio data and write it to file
+                        if (result.Reason == ResultReason.SynthesizingAudioCompleted && result.AudioData.Length > 0)
+                        {
+                            await File.WriteAllBytesAsync(request.OutputFileName, result.AudioData);
+                            // Check that the file was written and has the expected length
+                            var fileInfo = new FileInfo(request.OutputFileName);
+                            if (!fileInfo.Exists || fileInfo.Length != result.AudioData.Length)
+                            {
+                                return false;
+                            }
+                            return true;
+                        }
+                        else
+                        {
+                            return false;
+                        }
+                    }
+                    
+                    return result.Reason == ResultReason.SynthesizingAudioCompleted;
+                }
             }
             catch (Exception ex)
             {
@@ -191,6 +226,36 @@ namespace AzureTtsBatchStudio.Services
             });
 
             return !hasErrors;
+        }
+
+        private static void SetSpeechSynthesisOutputFormat(SpeechConfig config, AudioFormat format, QualityOption quality)
+        {
+            switch (format.Name.ToUpperInvariant())
+            {
+                case "MP3":
+                    if (quality.BitRate >= 128)
+                        // 192k is the highest available MP3 bit rate in the Azure Speech SDK.
+                        config.SetSpeechSynthesisOutputFormat(SpeechSynthesisOutputFormat.Audio48Khz192KBitRateMonoMp3);
+                    else
+                        // 96k is the lowest available MP3 bit rate in the Azure Speech SDK.
+                        config.SetSpeechSynthesisOutputFormat(SpeechSynthesisOutputFormat.Audio48Khz96KBitRateMonoMp3);
+                    break;
+                case "OGG":
+                    if (quality.SampleRate >= 48000)
+                        config.SetSpeechSynthesisOutputFormat(SpeechSynthesisOutputFormat.Ogg48Khz16BitMonoOpus);
+                    else
+                        config.SetSpeechSynthesisOutputFormat(SpeechSynthesisOutputFormat.Ogg24Khz16BitMonoOpus);
+                    break;
+                case "WAV":
+                default:
+                    if (quality.SampleRate >= 48000)
+                        config.SetSpeechSynthesisOutputFormat(SpeechSynthesisOutputFormat.Riff48Khz16BitMonoPcm);
+                    else if (quality.SampleRate >= 44100)
+                        config.SetSpeechSynthesisOutputFormat(SpeechSynthesisOutputFormat.Riff24Khz16BitMonoPcm);
+                    else
+                        config.SetSpeechSynthesisOutputFormat(SpeechSynthesisOutputFormat.Riff24Khz16BitMonoPcm);
+                    break;
+            }
         }
 
         private static string GenerateSsml(string text, string voiceName, double rate, double pitch)

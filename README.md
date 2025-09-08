@@ -142,9 +142,9 @@ build.bat  # On Windows
 - **OGG**: Open source compressed format
 
 ### Quality Settings
-- **Standard**: 64 kbps, 22 kHz - Good for voice content
-- **High**: 128 kbps, 44 kHz - Better quality for music/premium content
-- **Premium**: 320 kbps, 48 kHz - Highest quality, larger files
+- **Standard**: 64 kbps, 22 kHz - Good for voice content (uses 96k output format)
+- **High**: 128 kbps, 44 kHz - Better quality for music/premium content (uses 192k output format)
+- **Premium**: 320 kbps, 48 kHz - Highest quality, larger files (uses 192k output format - highest available in Azure Speech SDK)
 
 ## Building from Source
 
