@@ -32,8 +32,8 @@ sealed class Program
         return ex.Message.Contains("XOpenDisplay failed") ||
                ex.Message.Contains("No display") ||
                ex.Message.Contains("Cannot connect to display") ||
-               ex.GetType().Name.Contains("Display") ||
-               ex.GetType().Name.Contains("Graphics");
+               ex is PlatformNotSupportedException ||
+               ex is InvalidOperationException;
     }
 
     private static void HandleDisplayError(Exception ex)
