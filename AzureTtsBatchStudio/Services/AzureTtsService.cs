@@ -223,9 +223,9 @@ namespace AzureTtsBatchStudio.Services
             {
                 case "MP3":
                     if (quality.BitRate >= 320)
+                        config.SetSpeechSynthesisOutputFormat(SpeechSynthesisOutputFormat.Audio48Khz320KBitRateMonoMp3);
+                    else if (quality.BitRate >= 192)
                         config.SetSpeechSynthesisOutputFormat(SpeechSynthesisOutputFormat.Audio48Khz192KBitRateMonoMp3);
-                    else if (quality.BitRate >= 128)
-                        config.SetSpeechSynthesisOutputFormat(SpeechSynthesisOutputFormat.Audio48Khz96KBitRateMonoMp3);
                     else
                         // 96k is the lowest available MP3 bit rate in the Azure Speech SDK.
                         config.SetSpeechSynthesisOutputFormat(SpeechSynthesisOutputFormat.Audio48Khz96KBitRateMonoMp3);
