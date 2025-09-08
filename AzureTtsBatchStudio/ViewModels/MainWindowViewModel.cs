@@ -99,8 +99,14 @@ namespace AzureTtsBatchStudio.ViewModels
                     Console.WriteLine("Starting MainWindowViewModel async initialization...");
                     // Add timeout to prevent hanging
                     using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-                    await InitializeAsync().WaitAsync(cts.Token).ConfigureAwait(false);
-                    
+                    var initTask = InitializeAsync();
+                    var completedTask = await Task.WhenAny(initTask, Task.Delay(Timeout.Infinite, cts.Token)).ConfigureAwait(false);
+                    if (completedTask != initTask)
+                    {
+                        cts.Cancel(); // Ensure cancellation if needed
+                        throw new OperationCanceledException("Initialization timed out.");
+                    }
+                    await initTask.ConfigureAwait(false);
                     // Update UI on success
                     await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
                     {
