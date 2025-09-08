@@ -152,6 +152,11 @@ namespace AzureTtsBatchStudio.ViewModels
             {
                 ConnectionStatus = $"Error loading settings: {ex.Message}";
                 ConnectionStatusColor = Brushes.Red;
+                // Ensure we have default languages even if loading settings failed
+                if (AvailableLanguages.Count == 0)
+                {
+                    AddDefaultLanguages();
+                }
             }
         }
 
@@ -188,22 +193,28 @@ namespace AzureTtsBatchStudio.ViewModels
                 _ttsService.ConfigureConnection(SubscriptionKey, Region);
                 var languages = await _ttsService.GetAvailableLanguagesAsync();
                 
-                AvailableLanguages.Clear();
-                foreach (var language in languages)
+                await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
                 {
-                    AvailableLanguages.Add(language);
-                }
+                    AvailableLanguages.Clear();
+                    foreach (var language in languages)
+                    {
+                        AvailableLanguages.Add(language);
+                    }
 
-                DefaultLanguage = AvailableLanguages.FirstOrDefault(l => l.Code == _originalSettings.DefaultLanguage) 
-                                  ?? AvailableLanguages.FirstOrDefault();
+                    DefaultLanguage = AvailableLanguages.FirstOrDefault(l => l.Code == _originalSettings.DefaultLanguage) 
+                                      ?? AvailableLanguages.FirstOrDefault();
+                });
             }
             catch (Exception ex)
             {
-                ConnectionStatus = $"Error loading languages: {ex.Message}";
-                ConnectionStatusColor = Brushes.Red;
-                
-                // Fall back to default languages
-                AddDefaultLanguages();
+                await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+                {
+                    ConnectionStatus = $"Error loading languages: {ex.Message}";
+                    ConnectionStatusColor = Brushes.Red;
+                    
+                    // Fall back to default languages
+                    AddDefaultLanguages();
+                });
             }
         }
 
