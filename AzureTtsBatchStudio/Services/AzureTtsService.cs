@@ -136,6 +136,17 @@ namespace AzureTtsBatchStudio.Services
                         if (result.Reason == ResultReason.SynthesizingAudioCompleted && result.AudioData.Length > 0)
                         {
                             await File.WriteAllBytesAsync(request.OutputFileName, result.AudioData);
+                            // Check that the file was written and has the expected length
+                            var fileInfo = new FileInfo(request.OutputFileName);
+                            if (!fileInfo.Exists || fileInfo.Length != result.AudioData.Length)
+                            {
+                                return false;
+                            }
+                            return true;
+                        }
+                        else
+                        {
+                            return false;
                         }
                     }
                     
