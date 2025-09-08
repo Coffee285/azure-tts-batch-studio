@@ -48,7 +48,7 @@ Write-Host "=========================================" -ForegroundColor Yellow
 # Run the application and capture output
 try {
     # Start the application
-    $process = Start-Process -FilePath "dotnet" -ArgumentList "run" -PassThru -RedirectStandardOutput "output.log" -RedirectStandardError "error.log" -WindowStyle Hidden
+    $process = Start-Process -FilePath "dotnet" -ArgumentList "run" -PassThru -RedirectStandardOutput "output.log" -RedirectStandardError "error.log"
     
     Write-Host "✓ Application started. PID: $($process.Id)" -ForegroundColor Green
     Write-Host "Waiting for window to appear (timeout: 15 seconds)..." -ForegroundColor Yellow
