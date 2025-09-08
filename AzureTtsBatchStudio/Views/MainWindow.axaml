@@ -192,10 +192,10 @@
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <Slider Grid.Column="0" Value="{Binding SpeakingRate}" 
-                                        Minimum="0.5" Maximum="2.0" TickFrequency="0.1"
+                                        Minimum="0.5" Maximum="2.0" TickFrequency="0.01"
                                         Margin="0,0,8,0"/>
                                 <TextBlock Grid.Column="1" 
-                                           Text="{Binding SpeakingRate, StringFormat='{}{0:F1}x'}" 
+                                           Text="{Binding SpeakingRate, StringFormat='{}{0:F2}x'}" 
                                            FontFamily="{StaticResource PrimaryFont}"
                                            FontSize="{StaticResource FontSizeSmall}"
                                            VerticalAlignment="Center" MinWidth="35"/>

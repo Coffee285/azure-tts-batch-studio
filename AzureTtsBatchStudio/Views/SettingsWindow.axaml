@@ -8,9 +8,9 @@
         x:DataType="vm:SettingsWindowViewModel"
         Title="Settings - Azure TTS Batch Studio"
         Width="700"
-        Height="600"
+        Height="650"
         MinWidth="650"
-        MinHeight="550"
+        MinHeight="600"
         WindowStartupLocation="CenterOwner"
         Icon="/Assets/avalonia-logo.ico"
         FontFamily="{StaticResource PrimaryFont}">
@@ -51,7 +51,7 @@
 
         <!-- Settings Content -->
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-            <StackPanel Spacing="16">
+            <StackPanel Spacing="12">
                 
                 <!-- Azure Configuration -->
                 <Border BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" 
@@ -304,10 +304,10 @@
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <Slider Grid.Column="0" Value="{Binding DefaultSpeakingRate}" 
-                                        Minimum="0.5" Maximum="2.0" TickFrequency="0.1"
+                                        Minimum="0.5" Maximum="2.0" TickFrequency="0.01"
                                         Margin="0,0,12,0"/>
                                 <TextBlock Grid.Column="1" 
-                                           Text="{Binding DefaultSpeakingRate, StringFormat='{}{0:F1}x'}" 
+                                           Text="{Binding DefaultSpeakingRate, StringFormat='{}{0:F2}x'}" 
                                            FontFamily="{StaticResource PrimaryFont}"
                                            FontSize="{StaticResource FontSizeSmall}"
                                            VerticalAlignment="Center" MinWidth="35"/>
