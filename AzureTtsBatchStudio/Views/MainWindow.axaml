@@ -158,6 +158,7 @@
                                        Margin="0,0,0,6"/>
                             <ComboBox Grid.Row="1" ItemsSource="{Binding AvailableLanguages}" 
                                       SelectedItem="{Binding SelectedLanguage}"
+                                      DisplayMemberBinding="{Binding DisplayName}"
                                       BorderBrush="{DynamicResource TextControlElevationBorderBrush}"
                                       BorderThickness="1"
                                       CornerRadius="4"
@@ -178,7 +179,20 @@
                                       Padding="12,8"
                                       FontSize="{StaticResource FontSizeMedium}"
                                       MinHeight="32"
-                                      Margin="0,0,0,12"/>
+                                      Margin="0,0,0,12">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock>
+                                            <TextBlock.Text>
+                                                <MultiBinding StringFormat="{}{0} ({1})">
+                                                    <Binding Path="DisplayName" />
+                                                    <Binding Path="Gender" />
+                                                </MultiBinding>
+                                            </TextBlock.Text>
+                                        </TextBlock>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
                             
                             <TextBlock Grid.Row="4" Text="Speaking Rate" 
                                        FontFamily="{StaticResource PrimaryFont}"
