@@ -10,14 +10,26 @@ public partial class MainWindow : Window
         try
         {
             Console.WriteLine("Initializing MainWindow...");
+            
+            // Set properties before InitializeComponent to ensure they take effect
+            this.WindowState = WindowState.Normal;
+            this.WindowStartupLocation = Avalonia.Controls.WindowStartupLocation.CenterScreen;
+            this.Width = 1200;
+            this.Height = 800;
+            this.MinWidth = 900;
+            this.MinHeight = 700;
+            this.Topmost = false; // Make sure it's not hidden behind other windows
+            this.Title = "Azure TTS Batch Studio";
+            
             InitializeComponent();
             Console.WriteLine("MainWindow InitializeComponent completed.");
             
-            // Ensure window is visible and has proper state
-            this.WindowState = WindowState.Normal;
-            this.Topmost = false; // Make sure it's not hidden behind other windows
-            
             Console.WriteLine($"MainWindow initialized successfully. Size: {Width}x{Height}, Location: {WindowStartupLocation}");
+            
+            // Ensure window is properly configured for visibility
+            this.Activated += (s, e) => Console.WriteLine("MainWindow activated");
+            this.Loaded += (s, e) => Console.WriteLine("MainWindow loaded");
+            this.Opened += (s, e) => Console.WriteLine("MainWindow opened");
         }
         catch (Exception ex)
         {
