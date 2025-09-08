@@ -118,17 +118,27 @@ namespace AzureTtsBatchStudio.ViewModels
                     Console.WriteLine("MainWindowViewModel initialization timed out after 30 seconds");
                     await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
                     {
-                        StatusMessage = "Initialization timed out. Application may not function properly.";
+                        StatusMessage = "Initialization timed out. Loading default options...";
+                        // Ensure we have default data even if initialization failed
+                        if (AvailableLanguages.Count == 0)
+                        {
+                            AddDefaultLanguages();
+                        }
                     });
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine($"Error during MainWindowViewModel initialization: {ex.Message}");
                     Console.WriteLine($"Stack trace: {ex.StackTrace}");
-                    // Update status message on UI thread
+                    // Update status message on UI thread and ensure defaults are loaded
                     await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
                     {
-                        StatusMessage = $"Initialization error: {ex.Message}";
+                        StatusMessage = $"Initialization error: {ex.Message}. Loading default options...";
+                        // Ensure we have default data even if initialization failed
+                        if (AvailableLanguages.Count == 0)
+                        {
+                            AddDefaultLanguages();
+                        }
                     });
                 }
             });
@@ -190,33 +200,47 @@ namespace AzureTtsBatchStudio.ViewModels
                 if (!_ttsService.IsConfigured)
                 {
                     Console.WriteLine("Azure TTS not configured. Loading default languages...");
-                    StatusMessage = "Azure TTS not configured. Loading default languages...";
-                    AddDefaultLanguages();
+                    await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+                    {
+                        StatusMessage = "Azure TTS not configured. Loading default languages...";
+                        AddDefaultLanguages();
+                    });
                     return;
                 }
 
                 Console.WriteLine("Loading available languages from Azure TTS...");
-                StatusMessage = "Loading available languages...";
+                await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+                {
+                    StatusMessage = "Loading available languages...";
+                });
+                
                 var languages = await _ttsService.GetAvailableLanguagesAsync();
                 
-                AvailableLanguages.Clear();
-                foreach (var language in languages)
+                await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
                 {
-                    AvailableLanguages.Add(language);
-                }
+                    AvailableLanguages.Clear();
+                    foreach (var language in languages)
+                    {
+                        AvailableLanguages.Add(language);
+                    }
 
-                // Set default language
-                SelectedLanguage = AvailableLanguages.FirstOrDefault(l => l.Code == _currentSettings.DefaultLanguage) 
-                                   ?? AvailableLanguages.FirstOrDefault();
+                    // Set default language
+                    SelectedLanguage = AvailableLanguages.FirstOrDefault(l => l.Code == _currentSettings.DefaultLanguage) 
+                                       ?? AvailableLanguages.FirstOrDefault();
+
+                    StatusMessage = $"Loaded {languages.Count} languages";
+                });
 
                 Console.WriteLine($"Loaded {languages.Count} languages from Azure TTS.");
-                StatusMessage = $"Loaded {languages.Count} languages";
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error loading languages from Azure TTS: {ex.Message}");
-                StatusMessage = $"Error loading languages: {ex.Message}. Loading default languages...";
-                AddDefaultLanguages();
+                await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+                {
+                    StatusMessage = $"Error loading languages: {ex.Message}. Loading default languages...";
+                    AddDefaultLanguages();
+                });
                 // Don't re-throw here, allow the app to continue with defaults
             }
         }
@@ -318,7 +342,7 @@ namespace AzureTtsBatchStudio.ViewModels
         {
             if (value != null)
             {
-                _ = LoadVoicesForLanguageAsync(value.Code);
+                _ = Task.Run(async () => await LoadVoicesForLanguageAsync(value.Code));
             }
         }
 
@@ -328,30 +352,43 @@ namespace AzureTtsBatchStudio.ViewModels
             {
                 if (!_ttsService.IsConfigured)
                 {
-                    StatusMessage = $"Loading default voices for {locale}...";
-                    AddDefaultVoicesForLanguage(locale);
+                    await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+                    {
+                        StatusMessage = $"Loading default voices for {locale}...";
+                        AddDefaultVoicesForLanguage(locale);
+                    });
                     return;
                 }
 
-                StatusMessage = $"Loading voices for {locale}...";
+                await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+                {
+                    StatusMessage = $"Loading voices for {locale}...";
+                });
+                
                 var voices = await _ttsService.GetAvailableVoicesAsync(locale);
                 
-                AvailableVoices.Clear();
-                foreach (var voice in voices)
+                await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
                 {
-                    AvailableVoices.Add(voice);
-                }
+                    AvailableVoices.Clear();
+                    foreach (var voice in voices)
+                    {
+                        AvailableVoices.Add(voice);
+                    }
 
-                // Set default voice
-                SelectedVoice = AvailableVoices.FirstOrDefault(v => v.Name == _currentSettings.DefaultVoice) 
-                                ?? AvailableVoices.FirstOrDefault();
+                    // Set default voice
+                    SelectedVoice = AvailableVoices.FirstOrDefault(v => v.Name == _currentSettings.DefaultVoice) 
+                                    ?? AvailableVoices.FirstOrDefault();
 
-                StatusMessage = $"Loaded {voices.Count} voices for {locale}";
+                    StatusMessage = $"Loaded {voices.Count} voices for {locale}";
+                });
             }
             catch (Exception ex)
             {
-                StatusMessage = $"Error loading voices: {ex.Message}. Loading default voices...";
-                AddDefaultVoicesForLanguage(locale);
+                await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+                {
+                    StatusMessage = $"Error loading voices: {ex.Message}. Loading default voices...";
+                    AddDefaultVoicesForLanguage(locale);
+                });
             }
         }
 
