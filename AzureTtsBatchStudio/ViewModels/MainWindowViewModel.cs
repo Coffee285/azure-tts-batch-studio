@@ -87,27 +87,49 @@ namespace AzureTtsBatchStudio.ViewModels
             // Set initial status message
             StatusMessage = "Initializing application...";
             
-            // Initialize async but handle exceptions properly with timeout
-            // Use ConfigureAwait(false) to avoid deadlocks
+            // Set default output directory immediately
+            OutputDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "TTS Output");
+            
+            // Initialize async but don't block the constructor
+            // Use ConfigureAwait(false) to avoid deadlocks and handle exceptions properly
             _ = Task.Run(async () =>
             {
                 try
                 {
+                    Console.WriteLine("Starting MainWindowViewModel async initialization...");
                     // Add timeout to prevent hanging
                     using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-                    await InitializeAsync().WaitAsync(cts.Token).ConfigureAwait(false);
+                    var initTask = InitializeAsync();
+                    var completedTask = await Task.WhenAny(initTask, Task.Delay(Timeout.Infinite, cts.Token)).ConfigureAwait(false);
+                    if (completedTask != initTask)
+                    {
+                        cts.Cancel(); // Ensure cancellation if needed
+                        throw new OperationCanceledException("Initialization timed out.");
+                    }
+                    await initTask.ConfigureAwait(false);
+                    // Update UI on success
+                    await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+                    {
+                        StatusMessage = "Ready";
+                    });
                 }
                 catch (OperationCanceledException)
                 {
                     Console.WriteLine("MainWindowViewModel initialization timed out after 30 seconds");
-                    StatusMessage = "Initialization timed out. Application may not function properly.";
+                    await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+                    {
+                        StatusMessage = "Initialization timed out. Application may not function properly.";
+                    });
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine($"Error during MainWindowViewModel initialization: {ex.Message}");
                     Console.WriteLine($"Stack trace: {ex.StackTrace}");
                     // Update status message on UI thread
-                    StatusMessage = $"Initialization error: {ex.Message}";
+                    await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+                    {
+                        StatusMessage = $"Initialization error: {ex.Message}";
+                    });
                 }
             });
         }
