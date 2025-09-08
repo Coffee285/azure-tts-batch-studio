@@ -37,7 +37,11 @@ try {
         
         # Kill the process after showing success
         Write-Host "`nStopping application..." -ForegroundColor Yellow
-        $process.Kill()
+        try {
+            $process.Kill()
+        } catch {
+            Write-Host "WARNING: Could not kill process. It may have already exited." -ForegroundColor Yellow
+        }
         $process.WaitForExit()
     } else {
         Write-Host "`nApplication exited with code: $($process.ExitCode)" -ForegroundColor Red
