@@ -362,3 +362,7 @@ FodyWeavers.xsd
 # JetBrains Rider
 .idea/
 *.sln.iml
+
+# Temporary debug files
+debug_test.cs
+*_test.cs
