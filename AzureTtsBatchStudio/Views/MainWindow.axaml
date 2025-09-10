@@ -1,6 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:AzureTtsBatchStudio.ViewModels"
+        xmlns:views="using:AzureTtsBatchStudio.Views"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
@@ -23,10 +24,9 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         
-        <!-- Modern Header -->
+        <!-- Header -->
         <Border Grid.Row="0" 
                 BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" 
                 BorderThickness="1" 
@@ -46,7 +46,7 @@
                                    FontFamily="{StaticResource PrimaryFont}"
                                    FontSize="{StaticResource FontSizeTitle}"
                                    FontWeight="Bold"/>
-                        <TextBlock Text="Convert text to speech with advanced voice controls" 
+                        <TextBlock Text="Text-to-Speech conversion and AI-powered story creation" 
                                    FontFamily="{StaticResource PrimaryFont}"
                                    FontSize="{StaticResource FontSizeSmall}"
                                    Margin="0,4,0,0"
@@ -67,337 +67,18 @@
             </Grid>
         </Border>
         
-        <!-- Main Content -->
-        <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="16"/>
-                <ColumnDefinition Width="320"/>
-            </Grid.ColumnDefinitions>
+        <!-- Tab Control -->
+        <TabControl Grid.Row="1">
+            <!-- TTS Tab -->
+            <TabItem Header="Text-to-Speech">
+                <views:TtsTabView DataContext="{Binding}"/>
+            </TabItem>
             
-            <!-- Left Panel - Text Input -->
-            <Border Grid.Column="0" 
-                    BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" 
-                    BorderThickness="1" 
-                    CornerRadius="{StaticResource CardCornerRadius}" 
-                    Padding="{StaticResource LargeMargin}"
-                    Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-                    
-                    <TextBlock Grid.Row="0" Text="Text to Convert" 
-                               FontFamily="{StaticResource PrimaryFont}"
-                               FontSize="{StaticResource FontSizeXLarge}"
-                               FontWeight="SemiBold"
-                               Margin="0,0,0,12"/>
-                    
-                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                        <TextBox Text="{Binding InputText}" 
-                                 AcceptsReturn="True" 
-                                 TextWrapping="Wrap" 
-                                 MinHeight="350"
-                                 FontSize="{StaticResource FontSizeMedium}"
-                                 BorderBrush="{DynamicResource TextControlElevationBorderBrush}"
-                                 CornerRadius="6"
-                                 Padding="12"
-                                 Watermark="Enter text to convert to speech or use the buttons below to load from file..."/>
-                    </ScrollViewer>
-                    
-                    <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,16,0,0" Spacing="8">
-                        <Button Content="Load Text File" Command="{Binding LoadTextFileCommand}" 
-                                Background="Transparent"
-                                BorderBrush="{StaticResource AccentBrush}"
-                                Foreground="{StaticResource AccentBrush}"
-                                BorderThickness="1"
-                                CornerRadius="{StaticResource ButtonCornerRadius}"
-                                Padding="16,8"
-                                FontWeight="SemiBold"/>
-                        <Button Content="Import from CSV" Command="{Binding ImportCsvCommand}" 
-                                Background="Transparent"
-                                BorderBrush="{StaticResource AccentBrush}"
-                                Foreground="{StaticResource AccentBrush}"
-                                BorderThickness="1"
-                                CornerRadius="{StaticResource ButtonCornerRadius}"
-                                Padding="16,8"
-                                FontWeight="SemiBold"/>
-                        <Button Content="Clear" Command="{Binding ClearTextCommand}"
-                                Background="Transparent"
-                                BorderBrush="{StaticResource AccentBrush}"
-                                Foreground="{StaticResource AccentBrush}"
-                                BorderThickness="1"
-                                CornerRadius="{StaticResource ButtonCornerRadius}"
-                                Padding="16,8"
-                                FontWeight="SemiBold"/>
-                    </StackPanel>
-                </Grid>
-            </Border>
-            
-            <!-- Right Panel - Controls -->
-            <StackPanel Grid.Column="2" Spacing="16">
-                <!-- Voice Settings Card -->
-                <Border BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" 
-                        BorderThickness="1" 
-                        CornerRadius="{StaticResource CardCornerRadius}" 
-                        Padding="{StaticResource LargeMargin}"
-                        Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
-                    <StackPanel>
-                        <TextBlock Text="Voice Settings" 
-                                   FontFamily="{StaticResource PrimaryFont}"
-                                   FontSize="{StaticResource FontSizeXLarge}"
-                                   FontWeight="SemiBold"
-                                   Margin="0,0,0,16"/>
-                        
-                        <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="*">
-                            <TextBlock Grid.Row="0" Text="Language" 
-                                       FontFamily="{StaticResource PrimaryFont}"
-                                       FontSize="{StaticResource FontSizeMedium}"
-                                       Margin="0,0,0,6"/>
-                            <ComboBox Grid.Row="1" ItemsSource="{Binding AvailableLanguages}" 
-                                      SelectedItem="{Binding SelectedLanguage}"
-                                      DisplayMemberBinding="{Binding DisplayName}"
-                                      BorderBrush="{DynamicResource TextControlElevationBorderBrush}"
-                                      BorderThickness="1"
-                                      CornerRadius="4"
-                                      Padding="12,8"
-                                      FontSize="{StaticResource FontSizeMedium}"
-                                      MinHeight="32"
-                                      Margin="0,0,0,12"/>
-                            
-                            <TextBlock Grid.Row="2" Text="Voice" 
-                                       FontFamily="{StaticResource PrimaryFont}"
-                                       FontSize="{StaticResource FontSizeMedium}"
-                                       Margin="0,0,0,6"/>
-                            <ComboBox Grid.Row="3" ItemsSource="{Binding AvailableVoices}" 
-                                      SelectedItem="{Binding SelectedVoice}"
-                                      BorderBrush="{DynamicResource TextControlElevationBorderBrush}"
-                                      BorderThickness="1"
-                                      CornerRadius="4"
-                                      Padding="12,8"
-                                      FontSize="{StaticResource FontSizeMedium}"
-                                      MinHeight="32"
-                                      Margin="0,0,0,12">
-                                <ComboBox.ItemTemplate>
-                                    <DataTemplate>
-                                        <TextBlock>
-                                            <TextBlock.Text>
-                                                <MultiBinding StringFormat="{}{0} ({1})">
-                                                    <Binding Path="DisplayName" />
-                                                    <Binding Path="Gender" />
-                                                </MultiBinding>
-                                            </TextBlock.Text>
-                                        </TextBlock>
-                                    </DataTemplate>
-                                </ComboBox.ItemTemplate>
-                            </ComboBox>
-                            
-                            <TextBlock Grid.Row="4" Text="Speaking Rate" 
-                                       FontFamily="{StaticResource PrimaryFont}"
-                                       FontSize="{StaticResource FontSizeMedium}"
-                                       Margin="0,0,0,6"/>
-                            <Grid Grid.Row="5" Margin="0,0,0,12">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-                                <Slider Grid.Column="0" Value="{Binding SpeakingRate}" 
-                                        Minimum="0.5" Maximum="2.0" TickFrequency="0.01"
-                                        Margin="0,0,8,0"/>
-                                <TextBlock Grid.Column="1" 
-                                           Text="{Binding SpeakingRate, StringFormat='{}{0:F2}x'}" 
-                                           FontFamily="{StaticResource PrimaryFont}"
-                                           FontSize="{StaticResource FontSizeSmall}"
-                                           VerticalAlignment="Center" MinWidth="35"/>
-                            </Grid>
-                            
-                            <TextBlock Grid.Row="6" Text="Pitch" 
-                                       FontFamily="{StaticResource PrimaryFont}"
-                                       FontSize="{StaticResource FontSizeMedium}"
-                                       Margin="0,0,0,6"/>
-                            <Grid Grid.Row="7">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-                                <Slider Grid.Column="0" Value="{Binding Pitch}" 
-                                        Minimum="-50" Maximum="50" TickFrequency="5"
-                                        Margin="0,0,8,0"/>
-                                <TextBlock Grid.Column="1" 
-                                           Text="{Binding Pitch, StringFormat='{}{0:F0}%'}" 
-                                           FontFamily="{StaticResource PrimaryFont}"
-                                           FontSize="{StaticResource FontSizeSmall}"
-                                           VerticalAlignment="Center" MinWidth="35"/>
-                            </Grid>
-                        </Grid>
-                    </StackPanel>
-                </Border>
-                
-                <!-- Output Settings Card -->
-                <Border BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" 
-                        BorderThickness="1" 
-                        CornerRadius="{StaticResource CardCornerRadius}" 
-                        Padding="{StaticResource LargeMargin}"
-                        Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
-                    <StackPanel>
-                        <TextBlock Text="Output Settings" 
-                                   FontFamily="{StaticResource PrimaryFont}"
-                                   FontSize="{StaticResource FontSizeXLarge}"
-                                   FontWeight="SemiBold"
-                                   Margin="0,0,0,16"/>
-                        
-                        <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="*">
-                            <TextBlock Grid.Row="0" Text="Audio Format" 
-                                       FontFamily="{StaticResource PrimaryFont}"
-                                       FontSize="{StaticResource FontSizeMedium}"
-                                       Margin="0,0,0,6"/>
-                            <ComboBox Grid.Row="1" ItemsSource="{Binding AudioFormats}" 
-                                      SelectedItem="{Binding SelectedAudioFormat}"
-                                      BorderBrush="{DynamicResource TextControlElevationBorderBrush}"
-                                      BorderThickness="1"
-                                      CornerRadius="4"
-                                      Padding="12,8"
-                                      FontSize="{StaticResource FontSizeMedium}"
-                                      MinHeight="32"
-                                      Margin="0,0,0,12"/>
-                            
-                            <TextBlock Grid.Row="2" Text="Quality" 
-                                       FontFamily="{StaticResource PrimaryFont}"
-                                       FontSize="{StaticResource FontSizeMedium}"
-                                       Margin="0,0,0,6"/>
-                            <ComboBox Grid.Row="3" ItemsSource="{Binding QualityOptions}" 
-                                      SelectedItem="{Binding SelectedQuality}"
-                                      BorderBrush="{DynamicResource TextControlElevationBorderBrush}"
-                                      BorderThickness="1"
-                                      CornerRadius="4"
-                                      Padding="12,8"
-                                      FontSize="{StaticResource FontSizeMedium}"
-                                      MinHeight="32"
-                                      Margin="0,0,0,12"/>
-                            
-                            <TextBlock Grid.Row="4" Text="Output Directory" 
-                                       FontFamily="{StaticResource PrimaryFont}"
-                                       FontSize="{StaticResource FontSizeMedium}"
-                                       Margin="0,0,0,6"/>
-                            <Grid Grid.Row="5" Margin="0,0,0,12">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-                                <TextBox Grid.Column="0" Text="{Binding OutputDirectory}" 
-                                         CornerRadius="6,0,0,6" BorderThickness="1,1,0,1"
-                                         Padding="12,8"/>
-                                <Button Grid.Column="1" Content="Browse" 
-                                        Command="{Binding BrowseOutputDirectoryCommand}"
-                                        CornerRadius="0,6,6,0" MinWidth="70"
-                                        Background="Transparent"
-                                        BorderBrush="{StaticResource AccentBrush}"
-                                        Foreground="{StaticResource AccentBrush}"
-                                        BorderThickness="1"
-                                        Padding="8"/>
-                            </Grid>
-                        </Grid>
-                    </StackPanel>
-                </Border>
-                
-                <!-- Action Buttons Card -->
-                <Border BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" 
-                        BorderThickness="1" 
-                        CornerRadius="{StaticResource CardCornerRadius}" 
-                        Padding="{StaticResource LargeMargin}"
-                        Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
-                    <StackPanel Spacing="12">
-                        <Button Content="Generate Speech" 
-                                Command="{Binding GenerateSpeechCommand}"
-                                IsEnabled="{Binding !IsProcessing}"
-                                Background="{StaticResource SuccessBrush}"
-                                Foreground="White"
-                                BorderBrush="{StaticResource SuccessBrush}"
-                                BorderThickness="1"
-                                CornerRadius="{StaticResource ButtonCornerRadius}"
-                                Padding="16,8"
-                                FontWeight="SemiBold"
-                                FontSize="{StaticResource FontSizeMedium}"
-                                HorizontalAlignment="Stretch"
-                                Height="44"/>
-                        
-                        <Button Content="Preview Selected Voice" 
-                                Command="{Binding PreviewVoiceCommand}"
-                                IsEnabled="{Binding !IsProcessing}"
-                                Background="{StaticResource AccentBrush}"
-                                Foreground="White"
-                                BorderBrush="{StaticResource AccentBrush}"
-                                BorderThickness="1"
-                                CornerRadius="{StaticResource ButtonCornerRadius}"
-                                Padding="16,8"
-                                FontWeight="SemiBold"
-                                FontSize="{StaticResource FontSizeMedium}"
-                                HorizontalAlignment="Stretch"/>
-                        
-                        <Button Content="Stop Processing" 
-                                Command="{Binding StopProcessingCommand}"
-                                IsEnabled="{Binding IsProcessing}"
-                                Background="{StaticResource ErrorBrush}"
-                                Foreground="White"
-                                BorderBrush="{StaticResource ErrorBrush}"
-                                BorderThickness="1"
-                                CornerRadius="{StaticResource ButtonCornerRadius}"
-                                Padding="16,8"
-                                FontWeight="SemiBold"
-                                FontSize="{StaticResource FontSizeMedium}"
-                                HorizontalAlignment="Stretch"/>
-                    </StackPanel>
-                </Border>
-            </StackPanel>
-        </Grid>
-        
-        <!-- Modern Status Bar -->
-        <Border Grid.Row="2" 
-                BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" 
-                BorderThickness="1" 
-                CornerRadius="{StaticResource CardCornerRadius}" 
-                Padding="{StaticResource LargeMargin}" 
-                Margin="0,16,0,0"
-                Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                
-                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="{Binding StatusMessage}" 
-                               FontFamily="{StaticResource PrimaryFont}"
-                               FontSize="{StaticResource FontSizeMedium}"
-                               VerticalAlignment="Center"/>
-                    <ProgressBar Value="{Binding ProgressValue}" 
-                                 Maximum="100" 
-                                 Width="200" 
-                                 Height="6" 
-                                 CornerRadius="3"
-                                 Margin="16,0,0,0"
-                                 IsVisible="{Binding IsProcessing}"/>
-                </StackPanel>
-                
-                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
-                    <Border Background="{StaticResource AccentBrush}" CornerRadius="12" Padding="8,4">
-                        <TextBlock Text="{Binding ProcessedCount, StringFormat='Processed: {0}'}" 
-                                   Foreground="White" 
-                                   FontSize="{StaticResource FontSizeSmall}"
-                                   FontWeight="SemiBold"/>
-                    </Border>
-                    <Border Background="{DynamicResource SystemControlBackgroundBaseLowBrush}" 
-                            CornerRadius="12" Padding="8,4">
-                        <TextBlock Text="{Binding TotalCount, StringFormat='Total: {0}'}" 
-                                   FontFamily="{StaticResource PrimaryFont}"
-                                   FontSize="{StaticResource FontSizeSmall}"
-                                   FontWeight="SemiBold"/>
-                    </Border>
-                </StackPanel>
-            </Grid>
-        </Border>
+            <!-- Story Builder Tab -->
+            <TabItem Header="Story Builder">
+                <views:StoryBuilderView/>
+            </TabItem>
+        </TabControl>
     </Grid>
 
 </Window>

@@ -1,0 +1,469 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:AzureTtsBatchStudio.ViewModels"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="700"
+             x:Class="AzureTtsBatchStudio.Views.StoryBuilderView"
+             x:DataType="vm:StoryBuilderViewModel">
+
+    <Design.DataContext>
+        <vm:StoryBuilderViewModel/>
+    </Design.DataContext>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="280" MinWidth="200"/>
+            <ColumnDefinition Width="4"/>
+            <ColumnDefinition Width="*" MinWidth="400"/>
+            <ColumnDefinition Width="4"/>
+            <ColumnDefinition Width="350" MinWidth="300"/>
+        </Grid.ColumnDefinitions>
+        
+        <!-- Left Pane - Project Explorer -->
+        <Border Grid.Column="0" 
+                BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" 
+                BorderThickness="1" 
+                CornerRadius="{StaticResource CardCornerRadius}" 
+                Padding="{StaticResource LargeMargin}"
+                Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                
+                <!-- Project Explorer Header -->
+                <TextBlock Grid.Row="0" Text="Project Explorer" 
+                           FontFamily="{StaticResource PrimaryFont}"
+                           FontSize="{StaticResource FontSizeXLarge}"
+                           FontWeight="SemiBold"
+                           Margin="0,0,0,16"/>
+                
+                <!-- Project Actions -->
+                <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="8" Margin="0,0,0,12">
+                    <Button Content="New" Command="{Binding NewProjectCommand}" 
+                            Background="Transparent"
+                            BorderBrush="{StaticResource AccentBrush}"
+                            Foreground="{StaticResource AccentBrush}"
+                            BorderThickness="1"
+                            CornerRadius="{StaticResource ButtonCornerRadius}"
+                            Padding="8,4"
+                            FontSize="{StaticResource FontSizeSmall}"/>
+                    <Button Content="Open" Command="{Binding OpenProjectCommand}" 
+                            Background="Transparent"
+                            BorderBrush="{StaticResource AccentBrush}"
+                            Foreground="{StaticResource AccentBrush}"
+                            BorderThickness="1"
+                            CornerRadius="{StaticResource ButtonCornerRadius}"
+                            Padding="8,4"
+                            FontSize="{StaticResource FontSizeSmall}"/>
+                    <Button Content="Refresh" Command="{Binding RefreshProjectsCommand}" 
+                            Background="Transparent"
+                            BorderBrush="{StaticResource AccentBrush}"
+                            Foreground="{StaticResource AccentBrush}"
+                            BorderThickness="1"
+                            CornerRadius="{StaticResource ButtonCornerRadius}"
+                            Padding="8,4"
+                            FontSize="{StaticResource FontSizeSmall}"/>
+                </StackPanel>
+                
+                <!-- Project and Parts List -->
+                <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+                    <StackPanel Spacing="8">
+                        <!-- Projects Section -->
+                        <StackPanel>
+                            <TextBlock Text="Projects" 
+                                       FontWeight="SemiBold" 
+                                       FontSize="{StaticResource FontSizeMedium}"
+                                       Margin="0,0,0,6"/>
+                            <ComboBox ItemsSource="{Binding AvailableProjects}"
+                                      SelectedItem="{Binding SelectedProject}"
+                                      HorizontalAlignment="Stretch"
+                                      BorderBrush="{DynamicResource TextControlElevationBorderBrush}"
+                                      PlaceholderText="Select project..."/>
+                        </StackPanel>
+                        
+                        <!-- Story Parts Section -->
+                        <StackPanel IsVisible="{Binding CurrentProject, Converter={x:Static ObjectConverters.IsNotNull}}">
+                            <TextBlock Text="Story Parts" 
+                                       FontWeight="SemiBold" 
+                                       FontSize="{StaticResource FontSizeMedium}"
+                                       Margin="0,16,0,6"/>
+                            <ListBox ItemsSource="{Binding StoryParts}"
+                                     SelectedItem="{Binding SelectedStoryPart}"
+                                     MaxHeight="300"
+                                     Background="Transparent"
+                                     BorderBrush="{DynamicResource TextControlElevationBorderBrush}">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Margin="4">
+                                            <TextBlock Text="{Binding FileName}" 
+                                                       FontWeight="SemiBold"
+                                                       FontSize="{StaticResource FontSizeSmall}"/>
+                                            <TextBlock Text="{Binding WordCount, StringFormat='{}{0} words'}" 
+                                                       FontSize="{StaticResource FontSizeSmall}"
+                                                       Opacity="0.7"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+                
+                <!-- Status Info -->
+                <Border Grid.Row="3" 
+                        Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
+                        CornerRadius="4"
+                        Padding="8"
+                        Margin="0,8,0,0">
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="{Binding CurrentProject.Name, StringFormat='Project: {0}'}" 
+                                   FontSize="{StaticResource FontSizeSmall}"
+                                   FontWeight="SemiBold"
+                                   IsVisible="{Binding CurrentProject, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                        <TextBlock Text="{Binding CurrentWordCount, StringFormat='{}{0} words total'}" 
+                                   FontSize="{StaticResource FontSizeSmall}"
+                                   IsVisible="{Binding CurrentProject, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                        <ProgressBar Value="{Binding CompletionPercentage}"
+                                     Height="4"
+                                     CornerRadius="2"
+                                     Margin="0,4,0,0"
+                                     IsVisible="{Binding TargetWordCount, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                        <TextBlock Text="{Binding CompletionPercentage, StringFormat='{}{0:F1}% complete'}" 
+                                   FontSize="{StaticResource FontSizeSmall}"
+                                   Opacity="0.7"
+                                   IsVisible="{Binding TargetWordCount, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+        
+        <!-- Splitter -->
+        <GridSplitter Grid.Column="1" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"/>
+        
+        <!-- Center Pane - Story Console -->
+        <Grid Grid.Column="2">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            
+            <!-- Story Console Header -->
+            <Border Grid.Row="0" 
+                    BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" 
+                    BorderThickness="1" 
+                    CornerRadius="{StaticResource CardCornerRadius}" 
+                    Padding="{StaticResource LargeMargin}"
+                    Margin="0,0,0,8"
+                    Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
+                <TextBlock Text="Story Console" 
+                           FontFamily="{StaticResource PrimaryFont}"
+                           FontSize="{StaticResource FontSizeXLarge}"
+                           FontWeight="SemiBold"/>
+            </Border>
+            
+            <!-- Output Display -->
+            <Border Grid.Row="1" 
+                    BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" 
+                    BorderThickness="1" 
+                    CornerRadius="{StaticResource CardCornerRadius}" 
+                    Padding="{StaticResource LargeMargin}"
+                    Margin="0,0,0,8"
+                    Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <TextBox Text="{Binding OutputText}" 
+                             AcceptsReturn="True" 
+                             TextWrapping="Wrap" 
+                             MinHeight="200"
+                             Background="Transparent"
+                             BorderThickness="0"
+                             FontSize="{StaticResource FontSizeMedium}"
+                             IsReadOnly="True"
+                             Watermark="Generated story content will appear here..."/>
+                </ScrollViewer>
+            </Border>
+            
+            <!-- Prompt Input -->
+            <Border Grid.Row="2" 
+                    BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" 
+                    BorderThickness="1" 
+                    CornerRadius="{StaticResource CardCornerRadius}" 
+                    Padding="{StaticResource LargeMargin}"
+                    Margin="0,0,0,8"
+                    Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    
+                    <TextBox Grid.Row="0" Text="{Binding PromptInput}" 
+                             AcceptsReturn="True" 
+                             TextWrapping="Wrap" 
+                             MinHeight="80"
+                             BorderBrush="{DynamicResource TextControlElevationBorderBrush}"
+                             CornerRadius="4"
+                             Padding="8"
+                             FontSize="{StaticResource FontSizeMedium}"
+                             Watermark="Enter your story prompt here..."/>
+                    
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,8,0,0" Spacing="8">
+                        <Button Content="Send" Command="{Binding SendCommand}" 
+                                IsEnabled="{Binding !IsGenerating}"
+                                Background="{StaticResource SuccessBrush}"
+                                Foreground="White"
+                                BorderBrush="{StaticResource SuccessBrush}"
+                                BorderThickness="1"
+                                CornerRadius="{StaticResource ButtonCornerRadius}"
+                                Padding="16,8"
+                                FontWeight="SemiBold"/>
+                        <Button Content="Continue" Command="{Binding ContinueCommand}" 
+                                IsEnabled="{Binding !IsGenerating}"
+                                Background="{StaticResource AccentBrush}"
+                                Foreground="White"
+                                BorderBrush="{StaticResource AccentBrush}"
+                                BorderThickness="1"
+                                CornerRadius="{StaticResource ButtonCornerRadius}"
+                                Padding="16,8"
+                                FontWeight="SemiBold"/>
+                        <Button Content="Cancel" Command="{Binding CancelCommand}" 
+                                IsEnabled="{Binding IsGenerating}"
+                                Background="{StaticResource ErrorBrush}"
+                                Foreground="White"
+                                BorderBrush="{StaticResource ErrorBrush}"
+                                BorderThickness="1"
+                                CornerRadius="{StaticResource ButtonCornerRadius}"
+                                Padding="16,8"
+                                FontWeight="SemiBold"/>
+                        <Button Content="Save As Part" Command="{Binding SaveAsPartCommand}" 
+                                IsEnabled="{Binding OutputText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                Background="Transparent"
+                                BorderBrush="{StaticResource AccentBrush}"
+                                Foreground="{StaticResource AccentBrush}"
+                                BorderThickness="1"
+                                CornerRadius="{StaticResource ButtonCornerRadius}"
+                                Padding="16,8"
+                                FontWeight="SemiBold"/>
+                        <Button Content="Copy" Command="{Binding CopyToClipboardCommand}" 
+                                IsEnabled="{Binding OutputText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                Background="Transparent"
+                                BorderBrush="{StaticResource AccentBrush}"
+                                Foreground="{StaticResource AccentBrush}"
+                                BorderThickness="1"
+                                CornerRadius="{StaticResource ButtonCornerRadius}"
+                                Padding="16,8"
+                                FontWeight="SemiBold"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+            
+            <!-- Status Bar -->
+            <Border Grid.Row="3" 
+                    BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" 
+                    BorderThickness="1" 
+                    CornerRadius="{StaticResource CardCornerRadius}" 
+                    Padding="{StaticResource LargeMargin}"
+                    Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding StatusMessage}" 
+                                   FontFamily="{StaticResource PrimaryFont}"
+                                   FontSize="{StaticResource FontSizeSmall}"
+                                   VerticalAlignment="Center"/>
+                        <ProgressBar Value="{Binding ProgressValue}" 
+                                     Maximum="100" 
+                                     Width="150" 
+                                     Height="4" 
+                                     CornerRadius="2"
+                                     Margin="12,0,0,0"
+                                     IsVisible="{Binding IsGenerating}"/>
+                    </StackPanel>
+                    
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                        <TextBlock Text="{Binding ElapsedTime, StringFormat='Elapsed: {0:mm\\:ss}'}" 
+                                   FontSize="{StaticResource FontSizeSmall}"
+                                   VerticalAlignment="Center"
+                                   IsVisible="{Binding IsGenerating}"/>
+                        <TextBlock Text="{Binding TokenBudgetInfo}" 
+                                   FontSize="{StaticResource FontSizeSmall}"
+                                   VerticalAlignment="Center"
+                                   Opacity="0.7"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+        
+        <!-- Splitter -->
+        <GridSplitter Grid.Column="3" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"/>
+        
+        <!-- Right Pane - Instructions &amp; Model -->
+        <Grid Grid.Column="4">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="55*" MinHeight="200"/>
+                <RowDefinition Height="4"/>
+                <RowDefinition Height="45*" MinHeight="150"/>
+            </Grid.RowDefinitions>
+            
+            <!-- Instructions Editor -->
+            <Border Grid.Row="0" 
+                    BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" 
+                    BorderThickness="1" 
+                    CornerRadius="{StaticResource CardCornerRadius}" 
+                    Padding="{StaticResource LargeMargin}"
+                    Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    
+                    <TextBlock Grid.Row="0" Text="Instructions" 
+                               FontFamily="{StaticResource PrimaryFont}"
+                               FontSize="{StaticResource FontSizeXLarge}"
+                               FontWeight="SemiBold"
+                               Margin="0,0,0,12"/>
+                    
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <TextBox Text="{Binding Instructions}" 
+                                 AcceptsReturn="True" 
+                                 TextWrapping="Wrap" 
+                                 MinHeight="120"
+                                 BorderBrush="{DynamicResource TextControlElevationBorderBrush}"
+                                 CornerRadius="4"
+                                 Padding="8"
+                                 FontSize="{StaticResource FontSizeMedium}"
+                                 Watermark="Enter writing instructions and style guidance..."/>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+            
+            <!-- Splitter -->
+            <GridSplitter Grid.Row="1" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}" HorizontalAlignment="Stretch"/>
+            
+            <!-- Model &amp; Parameters -->
+            <Border Grid.Row="2" 
+                    BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" 
+                    BorderThickness="1" 
+                    CornerRadius="{StaticResource CardCornerRadius}" 
+                    Padding="{StaticResource LargeMargin}"
+                    Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Spacing="12">
+                        <TextBlock Text="Model &amp; Parameters" 
+                                   FontFamily="{StaticResource PrimaryFont}"
+                                   FontSize="{StaticResource FontSizeXLarge}"
+                                   FontWeight="SemiBold"/>
+                        
+                        <!-- Model -->
+                        <StackPanel>
+                            <TextBlock Text="Model" FontWeight="SemiBold" FontSize="{StaticResource FontSizeMedium}" Margin="0,0,0,4"/>
+                            <TextBox Text="{Binding Model}" 
+                                     BorderBrush="{DynamicResource TextControlElevationBorderBrush}"
+                                     CornerRadius="4"
+                                     Padding="8,6"/>
+                        </StackPanel>
+                        
+                        <!-- Temperature -->
+                        <StackPanel>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Temperature" FontWeight="SemiBold" FontSize="{StaticResource FontSizeMedium}"/>
+                                <TextBlock Grid.Column="1" Text="{Binding Temperature, StringFormat='{}{0:F2}'}" FontSize="{StaticResource FontSizeSmall}"/>
+                            </Grid>
+                            <Slider Value="{Binding Temperature}" 
+                                    Minimum="0" Maximum="2" TickFrequency="0.01"
+                                    Margin="0,4,0,0"/>
+                        </StackPanel>
+                        
+                        <!-- Top P -->
+                        <StackPanel>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Top P" FontWeight="SemiBold" FontSize="{StaticResource FontSizeMedium}"/>
+                                <TextBlock Grid.Column="1" Text="{Binding TopP, StringFormat='{}{0:F2}'}" FontSize="{StaticResource FontSizeSmall}"/>
+                            </Grid>
+                            <Slider Value="{Binding TopP}" 
+                                    Minimum="0" Maximum="1" TickFrequency="0.01"
+                                    Margin="0,4,0,0"/>
+                        </StackPanel>
+                        
+                        <!-- Max Output Tokens -->
+                        <StackPanel>
+                            <TextBlock Text="Max Output Tokens" FontWeight="SemiBold" FontSize="{StaticResource FontSizeMedium}" Margin="0,0,0,4"/>
+                            <NumericUpDown Value="{Binding MaxOutputTokens}" 
+                                           Minimum="1" Maximum="8192" Increment="256"
+                                           BorderBrush="{DynamicResource TextControlElevationBorderBrush}"
+                                           CornerRadius="4"/>
+                        </StackPanel>
+                        
+                        <!-- Context Budget -->
+                        <StackPanel>
+                            <TextBlock Text="Context Budget" FontWeight="SemiBold" FontSize="{StaticResource FontSizeMedium}" Margin="0,0,0,4"/>
+                            <NumericUpDown Value="{Binding ContextBudgetTokens}" 
+                                           Minimum="1000" Maximum="128000" Increment="1000"
+                                           BorderBrush="{DynamicResource TextControlElevationBorderBrush}"
+                                           CornerRadius="4"/>
+                        </StackPanel>
+                        
+                        <!-- K Recent Parts -->
+                        <StackPanel>
+                            <TextBlock Text="Recent Parts (K)" FontWeight="SemiBold" FontSize="{StaticResource FontSizeMedium}" Margin="0,0,0,4"/>
+                            <NumericUpDown Value="{Binding KRecentParts}" 
+                                           Minimum="0" Maximum="20" Increment="1"
+                                           BorderBrush="{DynamicResource TextControlElevationBorderBrush}"
+                                           CornerRadius="4"/>
+                        </StackPanel>
+                        
+                        <!-- Streaming Toggle -->
+                        <CheckBox IsChecked="{Binding Streaming}" Content="Streaming" FontWeight="SemiBold"/>
+                        
+                        <!-- Duration Goal -->
+                        <StackPanel>
+                            <TextBlock Text="Target Duration (minutes)" FontWeight="SemiBold" FontSize="{StaticResource FontSizeMedium}" Margin="0,0,0,4"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <NumericUpDown Grid.Column="0" Value="{Binding TargetMinutes}" 
+                                               Minimum="0" Maximum="1000" Increment="5"
+                                               BorderBrush="{DynamicResource TextControlElevationBorderBrush}"
+                                               CornerRadius="4"/>
+                                <TextBlock Grid.Column="1" Text="{Binding TargetWordCount, StringFormat='{} = {0} words'}" 
+                                           VerticalAlignment="Center" Margin="8,0,0,0"
+                                           FontSize="{StaticResource FontSizeSmall}" Opacity="0.7"/>
+                            </Grid>
+                        </StackPanel>
+                        
+                        <!-- WPM -->
+                        <StackPanel>
+                            <TextBlock Text="Words per Minute" FontWeight="SemiBold" FontSize="{StaticResource FontSizeMedium}" Margin="0,0,0,4"/>
+                            <NumericUpDown Value="{Binding Wpm}" 
+                                           Minimum="100" Maximum="300" Increment="10"
+                                           BorderBrush="{DynamicResource TextControlElevationBorderBrush}"
+                                           CornerRadius="4"/>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+    </Grid>
+
+</UserControl>
