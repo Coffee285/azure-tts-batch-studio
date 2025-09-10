@@ -125,7 +125,7 @@
                                    FontSize="{StaticResource FontSizeSmall}"
                                    FontWeight="SemiBold"
                                    IsVisible="{Binding CurrentProject, Converter={x:Static ObjectConverters.IsNotNull}}"/>
-                        <TextBlock Text="{Binding CurrentWordCount, StringFormat='{}{0} words total'}" 
+                        <TextBlock Text="{Binding ProgressMessage}" 
                                    FontSize="{StaticResource FontSizeSmall}"
                                    IsVisible="{Binding CurrentProject, Converter={x:Static ObjectConverters.IsNotNull}}"/>
                         <ProgressBar Value="{Binding CompletionPercentage}"
@@ -133,10 +133,11 @@
                                      CornerRadius="2"
                                      Margin="0,4,0,0"
                                      IsVisible="{Binding TargetWordCount, Converter={x:Static ObjectConverters.IsNotNull}}"/>
-                        <TextBlock Text="{Binding CompletionPercentage, StringFormat='{}{0:F1}% complete'}" 
+                        <TextBlock Text="{Binding NextDirectiveText}" 
                                    FontSize="{StaticResource FontSizeSmall}"
                                    Opacity="0.7"
-                                   IsVisible="{Binding TargetWordCount, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                                   FontStyle="Italic"
+                                   IsVisible="{Binding NextDirectiveText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
                     </StackPanel>
                 </Border>
             </Grid>

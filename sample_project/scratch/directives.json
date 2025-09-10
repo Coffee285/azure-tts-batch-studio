@@ -1,0 +1,23 @@
+[
+  {
+    "trigger": {
+      "atPart": 3
+    },
+    "directiveText": "Introduce a subtle twist",
+    "strict": false
+  },
+  {
+    "trigger": {
+      "atWordCount": 1000
+    },
+    "directiveText": "Add more tension and conflict",
+    "strict": false
+  },
+  {
+    "trigger": {
+      "atPart": 5
+    },
+    "directiveText": "Reveal a key character detail",
+    "strict": true
+  }
+]

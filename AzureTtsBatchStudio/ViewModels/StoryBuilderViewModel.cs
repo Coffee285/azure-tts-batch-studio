@@ -24,6 +24,8 @@ namespace AzureTtsBatchStudio.ViewModels
         private readonly ITopicManager _topicManager;
         private readonly IModelPresetService _modelPresetService;
         private readonly IQuickActionService _quickActionService;
+        private readonly IDirectiveService _directiveService;
+        private readonly IDurationCalculatorService _durationCalculatorService;
         private CancellationTokenSource? _cancellationTokenSource;
 
         [ObservableProperty]
@@ -131,6 +133,12 @@ namespace AzureTtsBatchStudio.ViewModels
         [ObservableProperty]
         private double _completionPercentage = 0;
 
+        [ObservableProperty]
+        private string _progressMessage = string.Empty;
+
+        [ObservableProperty]
+        private string _nextDirectiveText = string.Empty;
+
         public StoryBuilderViewModel() : this(
             new OpenAIClient(new System.Net.Http.HttpClient()),
             new ProjectManager(),
@@ -138,7 +146,9 @@ namespace AzureTtsBatchStudio.ViewModels
             new SettingsService(),
             new TopicManager(),
             new ModelPresetService(),
-            new QuickActionService())
+            new QuickActionService(),
+            new DirectiveService(),
+            new DurationCalculatorService())
         {
         }
 
@@ -149,7 +159,9 @@ namespace AzureTtsBatchStudio.ViewModels
             ISettingsService settingsService,
             ITopicManager topicManager,
             IModelPresetService modelPresetService,
-            IQuickActionService quickActionService)
+            IQuickActionService quickActionService,
+            IDirectiveService directiveService,
+            IDurationCalculatorService durationCalculatorService)
         {
             _openAIClient = openAIClient;
             _projectManager = projectManager;
@@ -158,6 +170,8 @@ namespace AzureTtsBatchStudio.ViewModels
             _topicManager = topicManager;
             _modelPresetService = modelPresetService;
             _quickActionService = quickActionService;
+            _directiveService = directiveService;
+            _durationCalculatorService = durationCalculatorService;
 
             _ = InitializeAsync();
         }
@@ -426,7 +440,15 @@ namespace AzureTtsBatchStudio.ViewModels
                 _cancellationTokenSource = new CancellationTokenSource();
                 
                 var startTime = DateTime.UtcNow;
-                var budget = _tokenBudgeter.CalculateBudget(Instructions, PromptInput, StoryParts.ToList(), CurrentProject.Parameters);
+                
+                // Get active directives for the current state
+                var currentPartIndex = StoryParts.Count;
+                var activeDirectives = _directiveService.GetActiveDirectives(Directives.ToList(), currentPartIndex, CurrentWordCount);
+                
+                // Apply directives to the prompt
+                var enhancedPrompt = _directiveService.BuildPromptWithDirectives(PromptInput, activeDirectives);
+                
+                var budget = _tokenBudgeter.CalculateBudget(Instructions, enhancedPrompt, StoryParts.ToList(), CurrentProject.Parameters);
                 
                 var messages = new List<OpenAIMessage>();
                 
@@ -822,13 +844,33 @@ namespace AzureTtsBatchStudio.ViewModels
 
         private void UpdateCompletionPercentage()
         {
-            if (TargetWordCount > 0)
+            var targetWords = _durationCalculatorService.CalculateTargetWords(TargetMinutes, Wpm);
+            TargetWordCount = targetWords;
+            
+            if (targetWords > 0)
             {
-                CompletionPercentage = Math.Min(100, (double)CurrentWordCount / TargetWordCount * 100);
+                CompletionPercentage = _durationCalculatorService.CalculateProgress(CurrentWordCount, targetWords);
+                ProgressMessage = _durationCalculatorService.FormatProgressMessage(CurrentWordCount, targetWords, Wpm);
             }
             else
             {
                 CompletionPercentage = 0;
+                ProgressMessage = $"{CurrentWordCount} words";
+            }
+
+            // Update next directive info
+            var currentPartIndex = StoryParts.Count;
+            var nextDirective = _directiveService.GetNextDirective(Directives.ToList(), currentPartIndex, CurrentWordCount);
+            if (nextDirective != null)
+            {
+                var triggerText = nextDirective.Trigger.AtPart.HasValue 
+                    ? $"at part {nextDirective.Trigger.AtPart.Value}" 
+                    : $"at {nextDirective.Trigger.AtWordCount} words";
+                NextDirectiveText = $"Next: {nextDirective.DirectiveText} ({triggerText})";
+            }
+            else
+            {
+                NextDirectiveText = string.Empty;
             }
         }
     }
