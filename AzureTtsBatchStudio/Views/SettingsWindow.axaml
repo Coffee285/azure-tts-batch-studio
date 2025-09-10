@@ -40,7 +40,7 @@
                                FontFamily="{StaticResource PrimaryFont}"
                                FontSize="{StaticResource FontSizeTitle}"
                                FontWeight="Bold"/>
-                    <TextBlock Text="Configure Azure TTS and application preferences" 
+                    <TextBlock Text="Configure Azure TTS, Story Builder, and application preferences" 
                                FontFamily="{StaticResource PrimaryFont}"
                                FontSize="{StaticResource FontSizeSmall}"
                                Margin="0,4,0,0"
@@ -114,6 +114,68 @@
                                        FontFamily="{StaticResource PrimaryFont}"
                                        FontSize="{StaticResource FontSizeSmall}"
                                        Margin="0,0,0,8"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Story Builder Configuration -->
+                <Border BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" 
+                        BorderThickness="1" 
+                        CornerRadius="{StaticResource CardCornerRadius}" 
+                        Padding="{StaticResource LargeMargin}"
+                        Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
+                    <StackPanel>
+                        <TextBlock Text="Story Builder Configuration" 
+                                   FontFamily="{StaticResource PrimaryFont}"
+                                   FontSize="{StaticResource FontSizeXLarge}"
+                                   FontWeight="SemiBold"
+                                   Margin="0,0,0,16"/>
+                        
+                        <Grid RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="180,*,Auto" 
+                              Margin="0,0,0,8">
+                            
+                            <TextBlock Grid.Row="0" Grid.Column="0" 
+                                       Text="OpenAI API Key" 
+                                       FontFamily="{StaticResource PrimaryFont}"
+                                       FontSize="{StaticResource FontSizeMedium}"
+                                       VerticalAlignment="Center" 
+                                       Margin="0,0,12,12"/>
+                            <TextBox Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2"
+                                     Text="{Binding OpenAIApiKey}" 
+                                     PasswordChar="*"
+                                     CornerRadius="6"
+                                     Watermark="Enter your OpenAI API key (sk-...)"
+                                     Margin="0,0,0,12"/>
+                            
+                            <TextBlock Grid.Row="1" Grid.Column="0" 
+                                       Text="Projects Root Path" 
+                                       FontFamily="{StaticResource PrimaryFont}"
+                                       FontSize="{StaticResource FontSizeMedium}"
+                                       VerticalAlignment="Center" 
+                                       Margin="0,0,12,12"/>
+                            <TextBox Grid.Row="1" Grid.Column="1" 
+                                     Text="{Binding ProjectsRootPath}" 
+                                     CornerRadius="6"
+                                     Watermark="Path to store story projects"
+                                     Margin="0,0,12,12"/>
+                            <Button Grid.Row="1" Grid.Column="2"
+                                    Content="Browse"
+                                    Command="{Binding BrowseProjectsRootPathCommand}"
+                                    Background="Transparent"
+                                    BorderBrush="{StaticResource AccentBrush}"
+                                    Foreground="{StaticResource AccentBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="{StaticResource ButtonCornerRadius}"
+                                    Padding="8,6"
+                                    Margin="0,0,0,12"/>
+                            
+                            <TextBlock Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3"
+                                       Text="Story Builder allows you to create long-form stories using OpenAI's language models and then convert them to speech using the TTS tab."
+                                       FontFamily="{StaticResource PrimaryFont}"
+                                       FontSize="{StaticResource FontSizeSmall}"
+                                       TextWrapping="Wrap"
+                                       Opacity="0.8"
+                                       Margin="0,8,0,0"/>
                         </Grid>
                     </StackPanel>
                 </Border>

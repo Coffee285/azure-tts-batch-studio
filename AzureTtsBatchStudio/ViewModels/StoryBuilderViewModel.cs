@@ -21,6 +21,7 @@ namespace AzureTtsBatchStudio.ViewModels
         private readonly IProjectManager _projectManager;
         private readonly ITokenBudgeter _tokenBudgeter;
         private readonly ISettingsService _settingsService;
+        private readonly ITopicManager _topicManager;
         private CancellationTokenSource? _cancellationTokenSource;
 
         [ObservableProperty]
@@ -114,7 +115,8 @@ namespace AzureTtsBatchStudio.ViewModels
             new OpenAIClient(new System.Net.Http.HttpClient()),
             new ProjectManager(),
             new TokenBudgeter(),
-            new SettingsService())
+            new SettingsService(),
+            new TopicManager())
         {
         }
 
@@ -122,12 +124,14 @@ namespace AzureTtsBatchStudio.ViewModels
             IOpenAIClient openAIClient,
             IProjectManager projectManager,
             ITokenBudgeter tokenBudgeter,
-            ISettingsService settingsService)
+            ISettingsService settingsService,
+            ITopicManager topicManager)
         {
             _openAIClient = openAIClient;
             _projectManager = projectManager;
             _tokenBudgeter = tokenBudgeter;
             _settingsService = settingsService;
+            _topicManager = topicManager;
 
             _ = InitializeAsync();
         }
@@ -477,6 +481,56 @@ namespace AzureTtsBatchStudio.ViewModels
                     StatusMessage = $"Error copying to clipboard: {ex.Message}";
                 }
             }
+        }
+
+        [RelayCommand]
+        private void PickRandomTopic()
+        {
+            if (Topics.Count == 0)
+            {
+                StatusMessage = "No topics available. Add some topics first.";
+                return;
+            }
+
+            var randomTopic = _topicManager.PickRandomTopic(Topics.ToList(), CurrentProject?.RandomSeed);
+            PromptInput = $"Write about: {randomTopic.TopicText}";
+            StatusMessage = $"Random topic selected: {randomTopic.TopicText}";
+        }
+
+        [RelayCommand]
+        private void Pick3Topics()
+        {
+            if (Topics.Count == 0)
+            {
+                StatusMessage = "No topics available. Add some topics first.";
+                return;
+            }
+
+            var randomTopics = _topicManager.PickRandomTopics(Topics.ToList(), 3, CurrentProject?.RandomSeed);
+            var topicsText = string.Join(", ", randomTopics.Select(t => t.TopicText));
+            PromptInput = $"Write about: {topicsText}";
+            StatusMessage = $"Random topics selected: {topicsText}";
+        }
+
+        [RelayCommand]
+        private void ShuffleTopics()
+        {
+            if (Topics.Count <= 1)
+            {
+                StatusMessage = "Need at least 2 topics to shuffle.";
+                return;
+            }
+
+            var topicsList = Topics.ToList();
+            _topicManager.ShuffleTopics(topicsList, CurrentProject?.RandomSeed);
+            
+            Topics.Clear();
+            foreach (var topic in topicsList)
+            {
+                Topics.Add(topic);
+            }
+
+            StatusMessage = "Topics shuffled";
         }
 
         private async Task RefreshProjectsAsync()

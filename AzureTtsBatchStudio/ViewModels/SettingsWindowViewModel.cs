@@ -98,6 +98,13 @@ namespace AzureTtsBatchStudio.ViewModels
         [ObservableProperty]
         private string _selectedLayoutStyle = "Standard";
 
+        // Story Builder Settings
+        [ObservableProperty]
+        private string _openAIApiKey = string.Empty;
+
+        [ObservableProperty]
+        private string _projectsRootPath = string.Empty;
+
         public event EventHandler? SettingsSaved;
         public event EventHandler? Cancelled;
 
@@ -136,6 +143,10 @@ namespace AzureTtsBatchStudio.ViewModels
                 SelectedFontSize = _originalSettings.FontSize;
                 SelectedFontFamily = _originalSettings.FontFamily;
                 SelectedLayoutStyle = _originalSettings.LayoutStyle;
+                
+                // Load Story Builder settings
+                OpenAIApiKey = _originalSettings.OpenAIApiKey;
+                ProjectsRootPath = _originalSettings.ProjectsRootPath;
 
                 // Load available languages if credentials are configured
                 if (!string.IsNullOrEmpty(SubscriptionKey) && !string.IsNullOrEmpty(Region))
@@ -310,6 +321,10 @@ namespace AzureTtsBatchStudio.ViewModels
             SelectedFontFamily = "Segoe UI";
             SelectedLayoutStyle = "Standard";
             
+            // Story Builder Settings
+            OpenAIApiKey = string.Empty;
+            ProjectsRootPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "StoryBuilder Projects");
+            
             ConnectionStatus = "Settings restored to defaults";
             ConnectionStatusColor = Brushes.Green;
         }
@@ -336,7 +351,10 @@ namespace AzureTtsBatchStudio.ViewModels
                     ThemeVariant = SelectedTheme,
                     FontSize = SelectedFontSize,
                     FontFamily = SelectedFontFamily,
-                    LayoutStyle = SelectedLayoutStyle
+                    LayoutStyle = SelectedLayoutStyle,
+                    // Story Builder Settings
+                    OpenAIApiKey = OpenAIApiKey.Trim(),
+                    ProjectsRootPath = ProjectsRootPath.Trim()
                 };
 
                 await _settingsService.SaveSettingsAsync(settings);
@@ -366,6 +384,35 @@ namespace AzureTtsBatchStudio.ViewModels
         private void Cancel()
         {
             Cancelled?.Invoke(this, EventArgs.Empty);
+        }
+
+        [RelayCommand]
+        private async Task BrowseProjectsRootPath()
+        {
+            try
+            {
+                if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+                {
+                    var storageProvider = desktop.MainWindow?.StorageProvider;
+                    if (storageProvider == null) return;
+
+                    var folders = await storageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+                    {
+                        Title = "Select Projects Root Directory",
+                        AllowMultiple = false
+                    });
+
+                    if (folders.Count > 0)
+                    {
+                        ProjectsRootPath = folders[0].Path.LocalPath;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ConnectionStatus = $"Error selecting folder: {ex.Message}";
+                ConnectionStatusColor = Brushes.Red;
+            }
         }
     }
 }
