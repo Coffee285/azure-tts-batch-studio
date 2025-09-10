@@ -16,13 +16,17 @@ namespace AzureTtsBatchStudio.Services
     {
         public async Task<string> CreateTempFileAsync(string prefix = "story_output")
         {
-            var tempPath = Path.GetTempPath();
-            var fileName = $"{prefix}_{DateTime.UtcNow:yyyyMMdd_HHmmss}_{Guid.NewGuid():N}.partial";
-            var filePath = Path.Combine(tempPath, fileName);
-            
-            // Create empty file
-            await File.WriteAllTextAsync(filePath, string.Empty);
-            return filePath;
+            // Use Path.GetTempFileName() for secure, unpredictable temp file creation
+            var tempFilePath = Path.GetTempFileName();
+
+            // Optionally, rename to add prefix and extension if needed
+            var directory = Path.GetDirectoryName(tempFilePath) ?? Path.GetTempPath();
+            var newFileName = $"{prefix}_{Guid.NewGuid():N}.partial";
+            var newFilePath = Path.Combine(directory, newFileName);
+            File.Move(tempFilePath, newFilePath);
+
+            // File is already created and empty
+            return newFilePath;
         }
 
         public async Task AppendToFileAsync(string filePath, string content)
