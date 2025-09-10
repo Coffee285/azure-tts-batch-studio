@@ -22,6 +22,8 @@ namespace AzureTtsBatchStudio.ViewModels
         private readonly ITokenBudgeter _tokenBudgeter;
         private readonly ISettingsService _settingsService;
         private readonly ITopicManager _topicManager;
+        private readonly IModelPresetService _modelPresetService;
+        private readonly IQuickActionService _quickActionService;
         private CancellationTokenSource? _cancellationTokenSource;
 
         [ObservableProperty]
@@ -50,6 +52,24 @@ namespace AzureTtsBatchStudio.ViewModels
 
         [ObservableProperty]
         private string _model = "gpt-4";
+
+        [ObservableProperty]
+        private ObservableCollection<ModelPreset> _modelPresets = new();
+
+        [ObservableProperty]
+        private ModelPreset? _selectedModelPreset;
+
+        [ObservableProperty]
+        private bool _isCustomModel = false;
+
+        [ObservableProperty]
+        private string _customModel = string.Empty;
+
+        [ObservableProperty]
+        private string _modelHelp = string.Empty;
+
+        [ObservableProperty]
+        private ObservableCollection<QuickAction> _quickActions = new();
 
         [ObservableProperty]
         private double _temperature = 0.8;
@@ -116,7 +136,9 @@ namespace AzureTtsBatchStudio.ViewModels
             new ProjectManager(),
             new TokenBudgeter(),
             new SettingsService(),
-            new TopicManager())
+            new TopicManager(),
+            new ModelPresetService(),
+            new QuickActionService())
         {
         }
 
@@ -125,13 +147,17 @@ namespace AzureTtsBatchStudio.ViewModels
             IProjectManager projectManager,
             ITokenBudgeter tokenBudgeter,
             ISettingsService settingsService,
-            ITopicManager topicManager)
+            ITopicManager topicManager,
+            IModelPresetService modelPresetService,
+            IQuickActionService quickActionService)
         {
             _openAIClient = openAIClient;
             _projectManager = projectManager;
             _tokenBudgeter = tokenBudgeter;
             _settingsService = settingsService;
             _topicManager = topicManager;
+            _modelPresetService = modelPresetService;
+            _quickActionService = quickActionService;
 
             _ = InitializeAsync();
         }
@@ -148,6 +174,22 @@ namespace AzureTtsBatchStudio.ViewModels
                 if (!string.IsNullOrEmpty(settings.OpenAIApiKey))
                 {
                     _openAIClient.ConfigureApiKey(settings.OpenAIApiKey);
+                }
+
+                // Load model presets
+                var presets = await _modelPresetService.GetPresetsAsync();
+                ModelPresets.Clear();
+                foreach (var preset in presets)
+                {
+                    ModelPresets.Add(preset);
+                }
+
+                // Load quick actions
+                var actions = _quickActionService.GetQuickActions();
+                QuickActions.Clear();
+                foreach (var action in actions)
+                {
+                    QuickActions.Add(action);
                 }
 
                 await RefreshProjectsAsync();
@@ -233,6 +275,48 @@ namespace AzureTtsBatchStudio.ViewModels
             if (CurrentProject != null)
             {
                 CurrentProject.Parameters.Stream = value;
+                _ = SaveCurrentProjectAsync();
+            }
+        }
+
+        partial void OnSelectedModelPresetChanged(ModelPreset? value)
+        {
+            if (value != null)
+            {
+                Model = value.Id;
+                ModelHelp = value.Notes;
+                IsCustomModel = false;
+            }
+            else
+            {
+                IsCustomModel = true;
+                ModelHelp = "Enter a custom model name";
+            }
+        }
+
+        partial void OnIsCustomModelChanged(bool value)
+        {
+            if (value)
+            {
+                SelectedModelPreset = null;
+                Model = CustomModel;
+                ModelHelp = "Enter a custom model name";
+            }
+        }
+
+        partial void OnCustomModelChanged(string value)
+        {
+            if (IsCustomModel)
+            {
+                Model = value;
+            }
+        }
+
+        partial void OnModelChanged(string value)
+        {
+            if (CurrentProject != null)
+            {
+                CurrentProject.Model = value;
                 _ = SaveCurrentProjectAsync();
             }
         }
@@ -533,6 +617,37 @@ namespace AzureTtsBatchStudio.ViewModels
             StatusMessage = "Topics shuffled";
         }
 
+        [RelayCommand]
+        private async Task ApplyQuickAction(QuickAction action)
+        {
+            if (string.IsNullOrEmpty(OutputText) || action == null)
+                return;
+
+            try
+            {
+                var actionPrompt = _quickActionService.ApplyQuickAction(action, OutputText, PromptInput);
+                PromptInput = actionPrompt;
+                StatusMessage = $"Applied quick action: {action.Label}";
+                
+                // Optionally auto-send for certain actions like Continue
+                if (action.Name == "Continue")
+                {
+                    await Send();
+                }
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Error applying quick action: {ex.Message}";
+            }
+        }
+
+        [RelayCommand]
+        private async Task ManageModels()
+        {
+            // This will be implemented in a future update with a dialog
+            StatusMessage = "Model management dialog coming soon...";
+        }
+
         private async Task RefreshProjectsAsync()
         {
             try
@@ -562,6 +677,23 @@ namespace AzureTtsBatchStudio.ViewModels
                 
                 // Load UI state from project
                 Model = CurrentProject.Model;
+                
+                // Set the correct model preset based on the loaded model
+                var preset = ModelPresets.FirstOrDefault(p => p.Id == CurrentProject.Model);
+                if (preset != null)
+                {
+                    SelectedModelPreset = preset;
+                    IsCustomModel = false;
+                    ModelHelp = preset.Notes;
+                }
+                else
+                {
+                    SelectedModelPreset = null;
+                    IsCustomModel = true;
+                    CustomModel = CurrentProject.Model;
+                    ModelHelp = "Custom model";
+                }
+                
                 Temperature = CurrentProject.Parameters.Temperature;
                 TopP = CurrentProject.Parameters.TopP;
                 MaxOutputTokens = CurrentProject.Parameters.MaxOutputTokens;

@@ -176,17 +176,73 @@
                     Padding="{StaticResource LargeMargin}"
                     Margin="0,0,0,8"
                     Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <TextBox Text="{Binding OutputText}" 
-                             AcceptsReturn="True" 
-                             TextWrapping="Wrap" 
-                             MinHeight="200"
-                             Background="Transparent"
-                             BorderThickness="0"
-                             FontSize="{StaticResource FontSizeMedium}"
-                             IsReadOnly="True"
-                             Watermark="Generated story content will appear here..."/>
-                </ScrollViewer>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    
+                    <!-- Quick Actions Toolbar -->
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="4" Margin="0,0,0,8"
+                                IsVisible="{Binding OutputText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                        <TextBlock Text="Quick Actions:" FontWeight="SemiBold" FontSize="{StaticResource FontSizeSmall}" 
+                                   VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        
+                        <ItemsControl ItemsSource="{Binding QuickActions}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal" Spacing="4"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Content="{Binding Label}" 
+                                            Command="{Binding $parent[UserControl].DataContext.ApplyQuickActionCommand}"
+                                            CommandParameter="{Binding}"
+                                            Background="Transparent"
+                                            BorderBrush="{StaticResource AccentBrush}"
+                                            Foreground="{StaticResource AccentBrush}"
+                                            BorderThickness="1"
+                                            CornerRadius="3"
+                                            Padding="6,3"
+                                            FontSize="{StaticResource FontSizeSmall}"
+                                            ToolTip.Tip="{Binding Description}"/>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                    
+                    <!-- Output Text Area -->
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <TextBox Text="{Binding OutputText}" 
+                                 AcceptsReturn="True" 
+                                 TextWrapping="Wrap" 
+                                 MinHeight="200"
+                                 Background="Transparent"
+                                 BorderThickness="0"
+                                 FontSize="{StaticResource FontSizeMedium}"
+                                 IsReadOnly="True"
+                                 Watermark="Generated story content will appear here..."/>
+                    </ScrollViewer>
+                    
+                    <!-- Generation Status -->
+                    <Grid Grid.Row="2" Margin="0,8,0,0"
+                          IsVisible="{Binding IsGenerating}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="Generating..." FontSize="{StaticResource FontSizeSmall}" VerticalAlignment="Center"/>
+                            <ProgressBar IsIndeterminate="True" Width="100" Height="4" CornerRadius="2"/>
+                        </StackPanel>
+                        
+                        <TextBlock Grid.Column="1" Text="{Binding ElapsedTime, StringFormat='Elapsed: {0:mm\\:ss}'}" 
+                                   FontSize="{StaticResource FontSizeSmall}" VerticalAlignment="Center"/>
+                    </Grid>
+                </Grid>
             </Border>
             
             <!-- Prompt Input -->
@@ -367,11 +423,60 @@
                         
                         <!-- Model -->
                         <StackPanel>
-                            <TextBlock Text="Model" FontWeight="SemiBold" FontSize="{StaticResource FontSizeMedium}" Margin="0,0,0,4"/>
-                            <TextBox Text="{Binding Model}" 
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Model" FontWeight="SemiBold" FontSize="{StaticResource FontSizeMedium}"/>
+                                <Button Grid.Column="1" Content="Manage..." Command="{Binding ManageModelsCommand}" 
+                                        Background="Transparent"
+                                        BorderBrush="{StaticResource AccentBrush}"
+                                        Foreground="{StaticResource AccentBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="3"
+                                        Padding="6,2"
+                                        FontSize="{StaticResource FontSizeSmall}"/>
+                            </Grid>
+                            
+                            <!-- Model Preset Dropdown -->
+                            <ComboBox ItemsSource="{Binding ModelPresets}" 
+                                      SelectedItem="{Binding SelectedModelPreset}"
+                                      IsVisible="{Binding !IsCustomModel}"
+                                      HorizontalAlignment="Stretch"
+                                      BorderBrush="{DynamicResource TextControlElevationBorderBrush}"
+                                      Margin="0,4,0,0">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding Label}" FontWeight="SemiBold"/>
+                                            <TextBlock Text="{Binding Id}" FontSize="{StaticResource FontSizeSmall}" Opacity="0.7"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                            
+                            <!-- Custom Model Input -->
+                            <TextBox Text="{Binding CustomModel}" 
+                                     IsVisible="{Binding IsCustomModel}"
                                      BorderBrush="{DynamicResource TextControlElevationBorderBrush}"
                                      CornerRadius="4"
-                                     Padding="8,6"/>
+                                     Padding="8,6"
+                                     Margin="0,4,0,0"
+                                     Watermark="Enter custom model name..."/>
+                            
+                            <!-- Custom Model Toggle -->
+                            <CheckBox IsChecked="{Binding IsCustomModel}" 
+                                      Content="Use custom model" 
+                                      FontSize="{StaticResource FontSizeSmall}"
+                                      Margin="0,4,0,0"/>
+                            
+                            <!-- Model Help Text -->
+                            <TextBlock Text="{Binding ModelHelp}" 
+                                       FontSize="{StaticResource FontSizeSmall}"
+                                       Opacity="0.7"
+                                       Margin="0,4,0,0"
+                                       TextWrapping="Wrap"/>
                         </StackPanel>
                         
                         <!-- Temperature -->
@@ -379,13 +484,17 @@
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="60"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="Temperature" FontWeight="SemiBold" FontSize="{StaticResource FontSizeMedium}"/>
-                                <TextBlock Grid.Column="1" Text="{Binding Temperature, StringFormat='{}{0:F2}'}" FontSize="{StaticResource FontSizeSmall}"/>
+                                <TextBlock Grid.Column="0" Text="Temperature" FontWeight="SemiBold" FontSize="{StaticResource FontSizeMedium}" VerticalAlignment="Center"/>
+                                <NumericUpDown Grid.Column="1" Value="{Binding Temperature}" 
+                                               Minimum="0" Maximum="2" Increment="0.01" FormatString="F2"
+                                               BorderBrush="{DynamicResource TextControlElevationBorderBrush}"
+                                               CornerRadius="3"
+                                               FontSize="{StaticResource FontSizeSmall}"/>
                             </Grid>
                             <Slider Value="{Binding Temperature}" 
-                                    Minimum="0" Maximum="2" TickFrequency="0.01"
+                                    Minimum="0" Maximum="2" TickFrequency="0.1" IsSnapToTickEnabled="False"
                                     Margin="0,4,0,0"/>
                         </StackPanel>
                         
@@ -394,13 +503,17 @@
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="60"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="Top P" FontWeight="SemiBold" FontSize="{StaticResource FontSizeMedium}"/>
-                                <TextBlock Grid.Column="1" Text="{Binding TopP, StringFormat='{}{0:F2}'}" FontSize="{StaticResource FontSizeSmall}"/>
+                                <TextBlock Grid.Column="0" Text="Top P" FontWeight="SemiBold" FontSize="{StaticResource FontSizeMedium}" VerticalAlignment="Center"/>
+                                <NumericUpDown Grid.Column="1" Value="{Binding TopP}" 
+                                               Minimum="0" Maximum="1" Increment="0.01" FormatString="F2"
+                                               BorderBrush="{DynamicResource TextControlElevationBorderBrush}"
+                                               CornerRadius="3"
+                                               FontSize="{StaticResource FontSizeSmall}"/>
                             </Grid>
                             <Slider Value="{Binding TopP}" 
-                                    Minimum="0" Maximum="1" TickFrequency="0.01"
+                                    Minimum="0" Maximum="1" TickFrequency="0.1" IsSnapToTickEnabled="False"
                                     Margin="0,4,0,0"/>
                         </StackPanel>
                         

@@ -136,4 +136,24 @@ namespace AzureTtsBatchStudio.Models
     {
         public string? Content { get; set; }
     }
+
+    public class ModelPreset
+    {
+        public string Label { get; set; } = string.Empty;
+        public string Id { get; set; } = string.Empty;
+        public string Notes { get; set; } = string.Empty;
+    }
+
+    public class ModelPresetsConfig
+    {
+        public List<ModelPreset> Presets { get; set; } = new();
+    }
+
+    public class QuickAction
+    {
+        public string Name { get; set; } = string.Empty;
+        public string Label { get; set; } = string.Empty;
+        public string Prompt { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+    }
 }

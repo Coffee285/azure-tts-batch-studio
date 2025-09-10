@@ -1,0 +1,19 @@
+{
+  "presets": [
+    {
+      "label": "Fast (Mini)",
+      "id": "gpt-4o-mini",
+      "notes": "Lower cost; fast drafting"
+    },
+    {
+      "label": "Quality (4o)",
+      "id": "gpt-4o",
+      "notes": "Higher quality; slower"
+    },
+    {
+      "label": "Legacy (4)",
+      "id": "gpt-4",
+      "notes": "Previous generation model"
+    }
+  ]
+}
