@@ -22,7 +22,13 @@ namespace AzureTtsBatchStudio.ViewModels
         private readonly ITokenBudgeter _tokenBudgeter;
         private readonly ISettingsService _settingsService;
         private readonly ITopicManager _topicManager;
+        private readonly IModelPresetService _modelPresetService;
+        private readonly IQuickActionService _quickActionService;
+        private readonly IDirectiveService _directiveService;
+        private readonly IDurationCalculatorService _durationCalculatorService;
+        private readonly IStreamingFileService _streamingFileService;
         private CancellationTokenSource? _cancellationTokenSource;
+        private string? _currentStreamingFile;
 
         [ObservableProperty]
         private string _projectsRoot = string.Empty;
@@ -50,6 +56,24 @@ namespace AzureTtsBatchStudio.ViewModels
 
         [ObservableProperty]
         private string _model = "gpt-4";
+
+        [ObservableProperty]
+        private ObservableCollection<ModelPreset> _modelPresets = new();
+
+        [ObservableProperty]
+        private ModelPreset? _selectedModelPreset;
+
+        [ObservableProperty]
+        private bool _isCustomModel = false;
+
+        [ObservableProperty]
+        private string _customModel = string.Empty;
+
+        [ObservableProperty]
+        private string _modelHelp = string.Empty;
+
+        [ObservableProperty]
+        private ObservableCollection<QuickAction> _quickActions = new();
 
         [ObservableProperty]
         private double _temperature = 0.8;
@@ -111,12 +135,26 @@ namespace AzureTtsBatchStudio.ViewModels
         [ObservableProperty]
         private double _completionPercentage = 0;
 
+        [ObservableProperty]
+        private string _progressMessage = string.Empty;
+
+        [ObservableProperty]
+        private string _nextDirectiveText = string.Empty;
+
+        [ObservableProperty]
+        private string _tokenBudgetWarning = string.Empty;
+
         public StoryBuilderViewModel() : this(
             new OpenAIClient(new System.Net.Http.HttpClient()),
             new ProjectManager(),
             new TokenBudgeter(),
             new SettingsService(),
-            new TopicManager())
+            new TopicManager(),
+            new ModelPresetService(),
+            new QuickActionService(),
+            new DirectiveService(),
+            new DurationCalculatorService(),
+            new StreamingFileService())
         {
         }
 
@@ -125,13 +163,23 @@ namespace AzureTtsBatchStudio.ViewModels
             IProjectManager projectManager,
             ITokenBudgeter tokenBudgeter,
             ISettingsService settingsService,
-            ITopicManager topicManager)
+            ITopicManager topicManager,
+            IModelPresetService modelPresetService,
+            IQuickActionService quickActionService,
+            IDirectiveService directiveService,
+            IDurationCalculatorService durationCalculatorService,
+            IStreamingFileService streamingFileService)
         {
             _openAIClient = openAIClient;
             _projectManager = projectManager;
             _tokenBudgeter = tokenBudgeter;
             _settingsService = settingsService;
             _topicManager = topicManager;
+            _modelPresetService = modelPresetService;
+            _quickActionService = quickActionService;
+            _directiveService = directiveService;
+            _durationCalculatorService = durationCalculatorService;
+            _streamingFileService = streamingFileService;
 
             _ = InitializeAsync();
         }
@@ -148,6 +196,22 @@ namespace AzureTtsBatchStudio.ViewModels
                 if (!string.IsNullOrEmpty(settings.OpenAIApiKey))
                 {
                     _openAIClient.ConfigureApiKey(settings.OpenAIApiKey);
+                }
+
+                // Load model presets
+                var presets = await _modelPresetService.GetPresetsAsync();
+                ModelPresets.Clear();
+                foreach (var preset in presets)
+                {
+                    ModelPresets.Add(preset);
+                }
+
+                // Load quick actions
+                var actions = _quickActionService.GetQuickActions();
+                QuickActions.Clear();
+                foreach (var action in actions)
+                {
+                    QuickActions.Add(action);
                 }
 
                 await RefreshProjectsAsync();
@@ -233,6 +297,48 @@ namespace AzureTtsBatchStudio.ViewModels
             if (CurrentProject != null)
             {
                 CurrentProject.Parameters.Stream = value;
+                _ = SaveCurrentProjectAsync();
+            }
+        }
+
+        partial void OnSelectedModelPresetChanged(ModelPreset? value)
+        {
+            if (value != null)
+            {
+                Model = value.Id;
+                ModelHelp = value.Notes;
+                IsCustomModel = false;
+            }
+            else
+            {
+                IsCustomModel = true;
+                ModelHelp = "Enter a custom model name";
+            }
+        }
+
+        partial void OnIsCustomModelChanged(bool value)
+        {
+            if (value)
+            {
+                SelectedModelPreset = null;
+                Model = CustomModel;
+                ModelHelp = "Enter a custom model name";
+            }
+        }
+
+        partial void OnCustomModelChanged(string value)
+        {
+            if (IsCustomModel)
+            {
+                Model = value;
+            }
+        }
+
+        partial void OnModelChanged(string value)
+        {
+            if (CurrentProject != null)
+            {
+                CurrentProject.Model = value;
                 _ = SaveCurrentProjectAsync();
             }
         }
@@ -342,7 +448,15 @@ namespace AzureTtsBatchStudio.ViewModels
                 _cancellationTokenSource = new CancellationTokenSource();
                 
                 var startTime = DateTime.UtcNow;
-                var budget = _tokenBudgeter.CalculateBudget(Instructions, PromptInput, StoryParts.ToList(), CurrentProject.Parameters);
+                
+                // Get active directives for the current state
+                var currentPartIndex = StoryParts.Count;
+                var activeDirectives = _directiveService.GetActiveDirectives(Directives.ToList(), currentPartIndex, CurrentWordCount);
+                
+                // Apply directives to the prompt
+                var enhancedPrompt = _directiveService.BuildPromptWithDirectives(PromptInput, activeDirectives);
+                
+                var budget = _tokenBudgeter.CalculateBudget(Instructions, enhancedPrompt, StoryParts.ToList(), CurrentProject.Parameters);
                 
                 var messages = new List<OpenAIMessage>();
                 
@@ -375,6 +489,9 @@ namespace AzureTtsBatchStudio.ViewModels
 
                 if (Streaming)
                 {
+                    // Create temp file for streaming
+                    _currentStreamingFile = await _streamingFileService.CreateTempFileAsync("story_output");
+                    
                     var stream = await _openAIClient.GenerateStreamAsync(request, _cancellationTokenSource.Token);
                     await foreach (var progress in stream)
                     {
@@ -383,6 +500,12 @@ namespace AzureTtsBatchStudio.ViewModels
 
                         OutputText = progress.Text;
                         ElapsedTime = progress.Elapsed;
+                        
+                        // Save incremental content to temp file
+                        if (!string.IsNullOrEmpty(progress.Text) && _currentStreamingFile != null)
+                        {
+                            await _streamingFileService.AppendToFileAsync(_currentStreamingFile, progress.Text);
+                        }
                         
                         if (!string.IsNullOrEmpty(progress.Error))
                         {
@@ -393,6 +516,15 @@ namespace AzureTtsBatchStudio.ViewModels
                         if (progress.IsComplete)
                         {
                             StatusMessage = $"Generation complete. Elapsed: {progress.Elapsed:mm\\:ss}";
+                            
+                            // Finalize the streaming file
+                            if (_currentStreamingFile != null)
+                            {
+                                var finalFile = await _streamingFileService.FinalizeFileAsync(
+                                    _currentStreamingFile, 
+                                    $"story_output_{DateTime.UtcNow:yyyyMMdd_HHmmss}.txt");
+                                StatusMessage += $" | Saved to: {Path.GetFileName(finalFile)}";
+                            }
                             break;
                         }
                     }
@@ -420,6 +552,13 @@ namespace AzureTtsBatchStudio.ViewModels
             finally
             {
                 IsGenerating = false;
+                
+                // Cleanup temp file if generation was interrupted
+                if (_currentStreamingFile != null)
+                {
+                    await _streamingFileService.CleanupTempFileAsync(_currentStreamingFile);
+                    _currentStreamingFile = null;
+                }
             }
         }
 
@@ -533,6 +672,37 @@ namespace AzureTtsBatchStudio.ViewModels
             StatusMessage = "Topics shuffled";
         }
 
+        [RelayCommand]
+        private async Task ApplyQuickAction(QuickAction action)
+        {
+            if (string.IsNullOrEmpty(OutputText) || action == null)
+                return;
+
+            try
+            {
+                var actionPrompt = _quickActionService.ApplyQuickAction(action, OutputText, PromptInput);
+                PromptInput = actionPrompt;
+                StatusMessage = $"Applied quick action: {action.Label}";
+                
+                // Optionally auto-send for certain actions like Continue
+                if (action.Name == "Continue")
+                {
+                    await Send();
+                }
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Error applying quick action: {ex.Message}";
+            }
+        }
+
+        [RelayCommand]
+        private async Task ManageModels()
+        {
+            // This will be implemented in a future update with a dialog
+            StatusMessage = "Model management dialog coming soon...";
+        }
+
         private async Task RefreshProjectsAsync()
         {
             try
@@ -562,6 +732,23 @@ namespace AzureTtsBatchStudio.ViewModels
                 
                 // Load UI state from project
                 Model = CurrentProject.Model;
+                
+                // Set the correct model preset based on the loaded model
+                var preset = ModelPresets.FirstOrDefault(p => p.Id == CurrentProject.Model);
+                if (preset != null)
+                {
+                    SelectedModelPreset = preset;
+                    IsCustomModel = false;
+                    ModelHelp = preset.Notes;
+                }
+                else
+                {
+                    SelectedModelPreset = null;
+                    IsCustomModel = true;
+                    CustomModel = CurrentProject.Model;
+                    ModelHelp = "Custom model";
+                }
+                
                 Temperature = CurrentProject.Parameters.Temperature;
                 TopP = CurrentProject.Parameters.TopP;
                 MaxOutputTokens = CurrentProject.Parameters.MaxOutputTokens;
@@ -681,6 +868,9 @@ namespace AzureTtsBatchStudio.ViewModels
                 {
                     TokenBudgetInfo += $" | {budget.TruncationReason}";
                 }
+
+                // Set warning message
+                TokenBudgetWarning = budget.HasWarning ? budget.WarningMessage : string.Empty;
             }
             catch (Exception ex)
             {
@@ -690,13 +880,33 @@ namespace AzureTtsBatchStudio.ViewModels
 
         private void UpdateCompletionPercentage()
         {
-            if (TargetWordCount > 0)
+            var targetWords = _durationCalculatorService.CalculateTargetWords(TargetMinutes, Wpm);
+            TargetWordCount = targetWords;
+            
+            if (targetWords > 0)
             {
-                CompletionPercentage = Math.Min(100, (double)CurrentWordCount / TargetWordCount * 100);
+                CompletionPercentage = _durationCalculatorService.CalculateProgress(CurrentWordCount, targetWords);
+                ProgressMessage = _durationCalculatorService.FormatProgressMessage(CurrentWordCount, targetWords, Wpm);
             }
             else
             {
                 CompletionPercentage = 0;
+                ProgressMessage = $"{CurrentWordCount} words";
+            }
+
+            // Update next directive info
+            var currentPartIndex = StoryParts.Count;
+            var nextDirective = _directiveService.GetNextDirective(Directives.ToList(), currentPartIndex, CurrentWordCount);
+            if (nextDirective != null)
+            {
+                var triggerText = nextDirective.Trigger.AtPart.HasValue 
+                    ? $"at part {nextDirective.Trigger.AtPart.Value}" 
+                    : $"at {nextDirective.Trigger.AtWordCount} words";
+                NextDirectiveText = $"Next: {nextDirective.DirectiveText} ({triggerText})";
+            }
+            else
+            {
+                NextDirectiveText = string.Empty;
             }
         }
     }
