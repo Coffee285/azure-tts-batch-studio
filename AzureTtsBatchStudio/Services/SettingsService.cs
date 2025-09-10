@@ -25,6 +25,10 @@ namespace AzureTtsBatchStudio.Services
         public string FontSize { get; set; } = "Medium"; // "Small", "Medium", "Large"
         public string FontFamily { get; set; } = "Segoe UI"; // "Segoe UI", "Calibri", "Arial"
         public string LayoutStyle { get; set; } = "Standard"; // "Compact", "Standard", "Spacious"
+        
+        // Story Builder Settings
+        public string OpenAIApiKey { get; set; } = string.Empty;
+        public string ProjectsRootPath { get; set; } = string.Empty;
     }
 
     public interface ISettingsService
