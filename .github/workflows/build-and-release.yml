@@ -49,8 +49,12 @@ jobs:
 
     - name: Run tests
       run: |
-        if (Test-Path "**/*Tests.csproj") {
-          dotnet test --configuration ${{ matrix.configuration }} --no-build --verbosity minimal
+        $testProjects = Get-ChildItem -Recurse -Filter "*Tests.csproj" | ForEach-Object { $_.FullName }
+        if ($testProjects.Count -gt 0) {
+          foreach ($testProject in $testProjects) {
+            Write-Host "Running tests for: $testProject"
+            dotnet test "$testProject" --configuration ${{ matrix.configuration }} --verbosity minimal
+          }
         } else {
           Write-Host "No test projects found, skipping tests"
         }
