@@ -25,6 +25,9 @@ namespace AzureTtsBatchStudio.Services
         public int EstimatedTokens { get; set; }
         public bool IsTruncated { get; set; }
         public string TruncationReason { get; set; } = string.Empty;
+        public bool HasWarning { get; set; }
+        public string WarningMessage { get; set; } = string.Empty;
+        public double BudgetUtilization { get; set; }
     }
 
     public class TokenBudgeter : ITokenBudgeter
@@ -118,6 +121,20 @@ namespace AzureTtsBatchStudio.Services
 
             result.IncludedParts = partsToInclude;
             result.EstimatedTokens = usedTokens;
+
+            // Calculate budget utilization and warnings
+            result.BudgetUtilization = (double)usedTokens / availableBudget;
+            
+            if (result.BudgetUtilization > 0.9)
+            {
+                result.HasWarning = true;
+                result.WarningMessage = "Token budget is nearly exhausted (>90%)";
+            }
+            else if (result.BudgetUtilization > 0.8)
+            {
+                result.HasWarning = true;
+                result.WarningMessage = "Token budget is high (>80%)";
+            }
 
             return result;
         }

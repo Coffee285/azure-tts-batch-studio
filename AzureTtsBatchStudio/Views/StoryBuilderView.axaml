@@ -356,6 +356,12 @@
                                    FontSize="{StaticResource FontSizeSmall}"
                                    VerticalAlignment="Center"
                                    Opacity="0.7"/>
+                        <TextBlock Text="{Binding TokenBudgetWarning}" 
+                                   FontSize="{StaticResource FontSizeSmall}"
+                                   VerticalAlignment="Center"
+                                   Foreground="{StaticResource ErrorBrush}"
+                                   FontWeight="SemiBold"
+                                   IsVisible="{Binding TokenBudgetWarning, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
                     </StackPanel>
                 </Grid>
             </Border>

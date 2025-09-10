@@ -26,7 +26,9 @@ namespace AzureTtsBatchStudio.ViewModels
         private readonly IQuickActionService _quickActionService;
         private readonly IDirectiveService _directiveService;
         private readonly IDurationCalculatorService _durationCalculatorService;
+        private readonly IStreamingFileService _streamingFileService;
         private CancellationTokenSource? _cancellationTokenSource;
+        private string? _currentStreamingFile;
 
         [ObservableProperty]
         private string _projectsRoot = string.Empty;
@@ -139,6 +141,9 @@ namespace AzureTtsBatchStudio.ViewModels
         [ObservableProperty]
         private string _nextDirectiveText = string.Empty;
 
+        [ObservableProperty]
+        private string _tokenBudgetWarning = string.Empty;
+
         public StoryBuilderViewModel() : this(
             new OpenAIClient(new System.Net.Http.HttpClient()),
             new ProjectManager(),
@@ -148,7 +153,8 @@ namespace AzureTtsBatchStudio.ViewModels
             new ModelPresetService(),
             new QuickActionService(),
             new DirectiveService(),
-            new DurationCalculatorService())
+            new DurationCalculatorService(),
+            new StreamingFileService())
         {
         }
 
@@ -161,7 +167,8 @@ namespace AzureTtsBatchStudio.ViewModels
             IModelPresetService modelPresetService,
             IQuickActionService quickActionService,
             IDirectiveService directiveService,
-            IDurationCalculatorService durationCalculatorService)
+            IDurationCalculatorService durationCalculatorService,
+            IStreamingFileService streamingFileService)
         {
             _openAIClient = openAIClient;
             _projectManager = projectManager;
@@ -172,6 +179,7 @@ namespace AzureTtsBatchStudio.ViewModels
             _quickActionService = quickActionService;
             _directiveService = directiveService;
             _durationCalculatorService = durationCalculatorService;
+            _streamingFileService = streamingFileService;
 
             _ = InitializeAsync();
         }
@@ -481,6 +489,9 @@ namespace AzureTtsBatchStudio.ViewModels
 
                 if (Streaming)
                 {
+                    // Create temp file for streaming
+                    _currentStreamingFile = await _streamingFileService.CreateTempFileAsync("story_output");
+                    
                     var stream = await _openAIClient.GenerateStreamAsync(request, _cancellationTokenSource.Token);
                     await foreach (var progress in stream)
                     {
@@ -489,6 +500,12 @@ namespace AzureTtsBatchStudio.ViewModels
 
                         OutputText = progress.Text;
                         ElapsedTime = progress.Elapsed;
+                        
+                        // Save incremental content to temp file
+                        if (!string.IsNullOrEmpty(progress.Text) && _currentStreamingFile != null)
+                        {
+                            await _streamingFileService.AppendToFileAsync(_currentStreamingFile, progress.Text);
+                        }
                         
                         if (!string.IsNullOrEmpty(progress.Error))
                         {
@@ -499,6 +516,15 @@ namespace AzureTtsBatchStudio.ViewModels
                         if (progress.IsComplete)
                         {
                             StatusMessage = $"Generation complete. Elapsed: {progress.Elapsed:mm\\:ss}";
+                            
+                            // Finalize the streaming file
+                            if (_currentStreamingFile != null)
+                            {
+                                var finalFile = await _streamingFileService.FinalizeFileAsync(
+                                    _currentStreamingFile, 
+                                    $"story_output_{DateTime.UtcNow:yyyyMMdd_HHmmss}.txt");
+                                StatusMessage += $" | Saved to: {Path.GetFileName(finalFile)}";
+                            }
                             break;
                         }
                     }
@@ -526,6 +552,13 @@ namespace AzureTtsBatchStudio.ViewModels
             finally
             {
                 IsGenerating = false;
+                
+                // Cleanup temp file if generation was interrupted
+                if (_currentStreamingFile != null)
+                {
+                    await _streamingFileService.CleanupTempFileAsync(_currentStreamingFile);
+                    _currentStreamingFile = null;
+                }
             }
         }
 
@@ -835,6 +868,9 @@ namespace AzureTtsBatchStudio.ViewModels
                 {
                     TokenBudgetInfo += $" | {budget.TruncationReason}";
                 }
+
+                // Set warning message
+                TokenBudgetWarning = budget.HasWarning ? budget.WarningMessage : string.Empty;
             }
             catch (Exception ex)
             {
