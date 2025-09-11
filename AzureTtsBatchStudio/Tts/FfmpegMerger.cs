@@ -148,7 +148,7 @@ namespace AzureTtsBatchStudio.Tts
         private static string EscapeForConcat(string path)
         {
             // Escape single quotes by replacing ' with '\''
-            return path.Replace("'", @"\'\'");
+            return path.Replace("'", @"'\''");
         }
     }
 }
