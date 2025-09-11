@@ -761,7 +761,12 @@ namespace AzureTtsBatchStudio.ViewModels
                             played = true;
                             break;
                         }
-                        catch
+                        catch (Win32Exception)
+                        {
+                            // Try next player
+                            continue;
+                        }
+                        catch (FileNotFoundException)
                         {
                             // Try next player
                             continue;
