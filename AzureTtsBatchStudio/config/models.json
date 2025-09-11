@@ -1,0 +1,19 @@
+{
+  "Presets": [
+    {
+      "Label": "Fast (Mini)",
+      "Id": "gpt-4o-mini",
+      "Notes": "Lower cost; fast drafting"
+    },
+    {
+      "Label": "Quality (4o)",
+      "Id": "gpt-4o",
+      "Notes": "Higher quality; slower"
+    },
+    {
+      "Label": "Legacy (4)",
+      "Id": "gpt-4",
+      "Notes": "Previous generation model"
+    }
+  ]
+}
