@@ -2,8 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -696,10 +698,20 @@ namespace AzureTtsBatchStudio.ViewModels
                     _currentSettings.AzureSubscriptionKey, 
                     _currentSettings.AzureRegion);
 
-                if (success)
+                if (success && File.Exists(tempFile))
                 {
-                    StatusMessage = "Voice preview generated. Check your system's default audio player.";
-                    // Note: In a real implementation, you'd want to play the audio directly
+                    StatusMessage = "Playing voice preview...";
+                    
+                    // Play the audio file using the system's default audio player
+                    try
+                    {
+                        await PlayAudioFileAsync(tempFile);
+                        StatusMessage = "Voice preview played successfully";
+                    }
+                    catch (Exception playEx)
+                    {
+                        StatusMessage = $"Generated preview but failed to play: {playEx.Message}";
+                    }
                 }
                 else
                 {
@@ -709,6 +721,83 @@ namespace AzureTtsBatchStudio.ViewModels
             catch (Exception ex)
             {
                 StatusMessage = $"Error generating preview: {ex.Message}";
+            }
+        }
+
+        private async Task PlayAudioFileAsync(string audioFilePath)
+        {
+            if (!File.Exists(audioFilePath))
+                throw new FileNotFoundException("Audio file not found", audioFilePath);
+
+            try
+            {
+                // Use the system's default audio player to play the file
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    // On Windows, use the default associated application
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = audioFilePath,
+                        UseShellExecute = true
+                    });
+                }
+                else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                {
+                    // On Linux, try common audio players
+                    var players = new[] { "paplay", "aplay", "mpv", "vlc", "xdg-open" };
+                    bool played = false;
+                    
+                    foreach (var player in players)
+                    {
+                        try
+                        {
+                            Process.Start(new ProcessStartInfo
+                            {
+                                FileName = player,
+                                Arguments = $"\"{audioFilePath}\"",
+                                UseShellExecute = false,
+                                CreateNoWindow = true
+                            });
+                            played = true;
+                            break;
+                        }
+                        catch (Win32Exception)
+                        {
+                            // Try next player
+                            continue;
+                        }
+                        catch (FileNotFoundException)
+                        {
+                            // Try next player
+                            continue;
+                        }
+                    }
+                    
+                    if (!played)
+                        throw new InvalidOperationException("No suitable audio player found");
+                }
+                else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                {
+                    // On macOS, use 'open' command
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = "open",
+                        Arguments = $"\"{audioFilePath}\"",
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    });
+                }
+                else
+                {
+                    throw new PlatformNotSupportedException("Audio playback not supported on this platform");
+                }
+
+                // Wait a moment to allow the player to start
+                await Task.Delay(1000);
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException($"Failed to play audio file: {ex.Message}", ex);
             }
         }
 
