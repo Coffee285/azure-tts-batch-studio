@@ -112,7 +112,16 @@ namespace AzureTtsBatchStudio.Services
                 // Set the appropriate output format based on the request
                 SetSpeechSynthesisOutputFormat(config, request.Format, request.Quality);
                 
-                var ssml = GenerateSsml(request.Text, request.Voice.Name, request.SpeakingRate, request.Pitch);
+                // Check if the text is already SSML - if so, use it directly
+                string ssml;
+                if (DetectSSML(request.Text))
+                {
+                    ssml = request.Text;
+                }
+                else
+                {
+                    ssml = GenerateSsml(request.Text, request.Voice.Name, request.SpeakingRate, request.Pitch);
+                }
                 
                 // Use the appropriate audio config method based on the format
                 AudioConfig audioConfig;
@@ -279,6 +288,13 @@ namespace AzureTtsBatchStudio.Services
         </prosody>
     </voice>
 </speak>";
+        }
+
+        private static bool DetectSSML(string text)
+        {
+            var trimmed = text.Trim();
+            return trimmed.StartsWith("<speak", StringComparison.OrdinalIgnoreCase) && 
+                   trimmed.EndsWith("</speak>", StringComparison.OrdinalIgnoreCase);
         }
 
         private static string GetLanguageDisplayName(string locale)
