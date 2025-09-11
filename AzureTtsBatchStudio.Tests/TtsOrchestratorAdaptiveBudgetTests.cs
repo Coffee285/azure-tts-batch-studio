@@ -105,5 +105,30 @@ namespace AzureTtsBatchStudio.Tests
             Assert.True(options.RespectSentenceBoundaries);
             Assert.True(options.KeepShortParagraphsTogether);
         }
+
+        [Fact]
+        public void TtsOrchestrator_ShouldHaveAdaptiveBudgetMethod()
+        {
+            // Arrange
+            var mockTtsService = new MockTtsService();
+            var orchestrator = new TtsOrchestrator(mockTtsService);
+            
+            // Act & Assert - Just verify the method exists (can't easily test without mocking Azure SDK)
+            var method = typeof(TtsOrchestrator).GetMethod("ProcessTextWithAdaptiveBudgetAsync");
+            Assert.NotNull(method);
+            Assert.True(method.IsPublic);
+        }
+
+        // Simple mock for testing
+        private class MockTtsService : IAzureTtsService
+        {
+            public bool IsConfigured => true;
+            public void ConfigureConnection(string subscriptionKey, string region) { }
+            public Task<bool> TestConnectionAsync(string subscriptionKey, string region) => Task.FromResult(true);
+            public Task<List<VoiceInfo>> GetAvailableVoicesAsync(string? locale = null) => Task.FromResult(new List<VoiceInfo>());
+            public Task<List<LanguageInfo>> GetAvailableLanguagesAsync() => Task.FromResult(new List<LanguageInfo>());
+            public Task<bool> GenerateSpeechAsync(TtsRequest request, string subscriptionKey, string region, CancellationToken cancellationToken = default) => Task.FromResult(true);
+            public Task<bool> GenerateBatchSpeechAsync(List<TtsRequest> requests, string subscriptionKey, string region, IProgress<ProcessingProgress>? progress = null, CancellationToken cancellationToken = default) => Task.FromResult(true);
+        }
     }
 }

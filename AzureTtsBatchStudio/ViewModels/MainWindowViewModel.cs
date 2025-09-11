@@ -616,7 +616,7 @@ namespace AzureTtsBatchStudio.ViewModels
 
                 StatusMessage = "Starting speech generation...";
                 
-                string result = await orchestrator.ProcessTextAsync(
+                string result = await orchestrator.ProcessTextWithAdaptiveBudgetAsync(
                     InputText,
                     options,
                     baseRequest,

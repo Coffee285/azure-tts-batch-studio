@@ -11,6 +11,35 @@ using Microsoft.Extensions.Logging;
 
 namespace AzureTtsBatchStudio.Tts
 {
+    internal class AdaptiveBudgetManager
+    {
+        private int _currentBudget;
+        private readonly int _originalBudget;
+        private readonly int _minBudget;
+
+        public AdaptiveBudgetManager(int originalBudget, int minBudget)
+        {
+            _originalBudget = originalBudget;
+            _currentBudget = originalBudget;
+            _minBudget = Math.Max(minBudget, 500); // Absolute minimum
+        }
+
+        public int CurrentBudget => _currentBudget;
+        public bool HasReducedBudget => _currentBudget < _originalBudget;
+
+        public bool TryReduceBudget()
+        {
+            var newBudget = (int)(_currentBudget * 0.85); // Reduce by 15%
+            if (newBudget < _minBudget)
+            {
+                return false; // Cannot reduce further
+            }
+            
+            _currentBudget = newBudget;
+            return true;
+        }
+    }
+
     public sealed class TtsOrchestrator
     {
         private readonly IAzureTtsService _ttsService;
@@ -25,6 +54,62 @@ namespace AzureTtsBatchStudio.Tts
             _ttsService = ttsService;
             _merger = new FfmpegMerger();
             _logger = logger;
+        }
+
+        public async Task<string> ProcessTextWithAdaptiveBudgetAsync(
+            string inputText,
+            TtsRenderOptions options,
+            TtsRequest baseRequest,
+            string subscriptionKey,
+            string region,
+            CancellationToken cancellationToken = default)
+        {
+            var budgetManager = new AdaptiveBudgetManager(
+                options.TargetChunkChars - options.SafetyMarginChars,
+                options.MinChunkChars);
+
+            var currentOptions = options;
+            
+            while (true)
+            {
+                try
+                {
+                    return await ProcessTextAsync(inputText, currentOptions, baseRequest, subscriptionKey, region, cancellationToken);
+                }
+                catch (TtsException ttsEx) when (ttsEx.ErrorType == TtsErrorType.PayloadTooLarge)
+                {
+                    _logger?.LogWarning("Payload too large error occurred, attempting budget reduction");
+                    
+                    if (budgetManager.TryReduceBudget())
+                    {
+                        _logger?.LogInformation("Reducing budget from {Old} to {New} and retrying", 
+                                               currentOptions.TargetChunkChars - currentOptions.SafetyMarginChars, 
+                                               budgetManager.CurrentBudget);
+                        
+                        StatusChanged?.Invoke($"Content too large, reducing chunk size to {budgetManager.CurrentBudget} chars and retrying...");
+                        
+                        // Create new options with reduced budget
+                        currentOptions = new TtsRenderOptions
+                        {
+                            MergeMode = options.MergeMode,
+                            TargetChunkChars = budgetManager.CurrentBudget + options.SafetyMarginChars,
+                            MinChunkChars = options.MinChunkChars,
+                            SafetyMarginChars = options.SafetyMarginChars,
+                            RespectSentenceBoundaries = options.RespectSentenceBoundaries,
+                            KeepShortParagraphsTogether = options.KeepShortParagraphsTogether
+                        };
+                        
+                        // Continue the loop to retry with new budget
+                    }
+                    else
+                    {
+                        // Cannot reduce budget further
+                        throw new InvalidOperationException(
+                            $"Cannot reduce chunk size further (current: {budgetManager.CurrentBudget}, minimum: {options.MinChunkChars}). " +
+                            "The text may contain sentences that are too long to process individually.", ttsEx);
+                    }
+                }
+            }
         }
 
         public async Task<string> ProcessTextAsync(
