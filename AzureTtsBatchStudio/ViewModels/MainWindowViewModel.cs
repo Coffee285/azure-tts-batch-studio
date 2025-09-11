@@ -88,7 +88,7 @@ namespace AzureTtsBatchStudio.ViewModels
         private int _minChunkChars = 1400;
 
         [ObservableProperty]
-        private int _safetyMarginChars = 200;
+        private int _safetyMarginChars = 250;
 
         [ObservableProperty]
         private bool _respectSentenceBoundaries = true;
