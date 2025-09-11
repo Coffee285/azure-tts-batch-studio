@@ -252,6 +252,79 @@
                     </StackPanel>
                 </Border>
                 
+                <!-- Merge & Chunking Options Card -->
+                <Border BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" 
+                        BorderThickness="1" 
+                        CornerRadius="{StaticResource CardCornerRadius}" 
+                        Padding="{StaticResource LargeMargin}"
+                        Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
+                    <StackPanel>
+                        <TextBlock Text="Merge and Chunking" 
+                                   FontFamily="{StaticResource PrimaryFont}"
+                                   FontSize="{StaticResource FontSizeXLarge}"
+                                   FontWeight="SemiBold"
+                                   Margin="0,0,0,16"/>
+                        
+                        <!-- Merge Mode -->
+                        <TextBlock Text="Output Mode" 
+                                   FontWeight="SemiBold" 
+                                   FontSize="{StaticResource FontSizeMedium}"
+                                   Margin="0,0,0,8"/>
+                        <StackPanel Orientation="Horizontal" Spacing="16" Margin="0,0,0,16">
+                            <RadioButton Content="Single merged MP3" 
+                                         IsChecked="{Binding MergeMode, Converter={x:Static vm:EnumToBoolConverter.Instance}, ConverterParameter=SingleMergedMp3}"
+                                         FontSize="{StaticResource FontSizeSmall}"/>
+                            <RadioButton Content="Keep separate files" 
+                                         IsChecked="{Binding MergeMode, Converter={x:Static vm:EnumToBoolConverter.Instance}, ConverterParameter=SeparateFilesOnly}"
+                                         FontSize="{StaticResource FontSizeSmall}"/>
+                        </StackPanel>
+                        
+                        <!-- Advanced Chunking Settings -->
+                        <Expander Header="Advanced Chunking Settings" FontWeight="SemiBold" IsExpanded="False">
+                            <StackPanel Margin="0,8,0,0" Spacing="12">
+                                <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto" Margin="8">
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Target chunk (chars):" 
+                                               VerticalAlignment="Center" MinWidth="140" Margin="0,0,8,0"/>
+                                    <NumericUpDown Grid.Row="0" Grid.Column="1" 
+                                                   Value="{Binding TargetChunkChars}" 
+                                                   Minimum="500" Maximum="5000" Increment="100" 
+                                                   Width="120" HorizontalAlignment="Left"/>
+                                    
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Min chunk (chars):" 
+                                               VerticalAlignment="Center" Margin="0,8,8,0"/>
+                                    <NumericUpDown Grid.Row="1" Grid.Column="1" 
+                                                   Value="{Binding MinChunkChars}" 
+                                                   Minimum="200" Maximum="3000" Increment="100" 
+                                                   Width="120" HorizontalAlignment="Left" Margin="0,8,0,0"/>
+                                    
+                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Safety margin (chars):" 
+                                               VerticalAlignment="Center" Margin="0,8,8,0"/>
+                                    <NumericUpDown Grid.Row="2" Grid.Column="1" 
+                                                   Value="{Binding SafetyMarginChars}" 
+                                                   Minimum="50" Maximum="500" Increment="50" 
+                                                   Width="120" HorizontalAlignment="Left" Margin="0,8,0,0"/>
+                                    
+                                    <CheckBox Grid.Row="3" Grid.ColumnSpan="2" 
+                                              IsChecked="{Binding RespectSentenceBoundaries}" 
+                                              Content="Respect sentence boundaries" 
+                                              Margin="0,8,0,0"/>
+                                    
+                                    <CheckBox Grid.Row="4" Grid.ColumnSpan="2" 
+                                              IsChecked="{Binding KeepShortParagraphsTogether}" 
+                                              Content="Keep short paragraphs together" 
+                                              Margin="0,4,0,0"/>
+                                </Grid>
+                                
+                                <TextBlock Text="Note: Exceeding server limits will automatically reduce chunk size and retry." 
+                                           FontSize="{StaticResource FontSizeSmall}" 
+                                           Opacity="0.7" 
+                                           TextWrapping="Wrap"
+                                           Margin="8,0,8,0"/>
+                            </StackPanel>
+                        </Expander>
+                    </StackPanel>
+                </Border>
+                
                 <!-- Action Buttons Card -->
                 <Border BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" 
                         BorderThickness="1" 

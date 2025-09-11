@@ -11,6 +11,28 @@
   
     <Application.Styles>
         <FluentTheme />
+        
+        <!-- Custom Styles -->
+        <Style Selector="Button.Compact">
+            <Setter Property="MinHeight" Value="28"/>
+            <Setter Property="MaxHeight" Value="32"/>
+            <Setter Property="Padding" Value="10,4"/>
+            <Setter Property="FontSize" Value="{StaticResource FontSizeSmall}"/>
+        </Style>
+        
+        <Style Selector="NumericUpDown">
+            <Setter Property="MinWidth" Value="80"/>
+            <Setter Property="MaxWidth" Value="160"/>
+            <Setter Property="MinHeight" Value="28"/>
+        </Style>
+        
+        <Style Selector="ComboBox">
+            <Setter Property="MinHeight" Value="28"/>
+        </Style>
+        
+        <Style Selector="TextBox">
+            <Setter Property="MinHeight" Value="28"/>
+        </Style>
     </Application.Styles>
 
     <Application.Resources>

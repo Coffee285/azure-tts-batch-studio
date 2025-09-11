@@ -1,0 +1,125 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:AzureTtsBatchStudio.Logging"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="240"
+             x:Class="AzureTtsBatchStudio.Logging.LogConsoleView"
+             x:DataType="vm:LogViewModel">
+
+    <Design.DataContext>
+        <vm:LogViewModel/>
+    </Design.DataContext>
+
+    <Border BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" 
+            BorderThickness="1" 
+            CornerRadius="{StaticResource CardCornerRadius}" 
+            Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            
+            <!-- Header -->
+            <Border Grid.Row="0" 
+                    Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
+                    Padding="12,8">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <TextBlock Grid.Column="0" Text="Log Console" 
+                               FontWeight="SemiBold" 
+                               FontSize="{StaticResource FontSizeMedium}"
+                               VerticalAlignment="Center"/>
+                    
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                        <ComboBox SelectedItem="{Binding MinimumLevel}" MinWidth="100">
+                            <ComboBox.Items>
+                                <x:String>Trace</x:String>
+                                <x:String>Debug</x:String>
+                                <x:String>Information</x:String>
+                                <x:String>Warning</x:String>
+                                <x:String>Error</x:String>
+                                <x:String>Critical</x:String>
+                            </ComboBox.Items>
+                        </ComboBox>
+                        
+                        <TextBox Text="{Binding SearchFilter}" 
+                                 Watermark="Filter logs..." 
+                                 MinWidth="120"/>
+                        
+                        <Button Content="Clear" 
+                                Command="{Binding ClearLogsCommand}"
+                                Background="Transparent"
+                                BorderBrush="{StaticResource AccentBrush}"
+                                Foreground="{StaticResource AccentBrush}"
+                                BorderThickness="1"
+                                CornerRadius="3"
+                                Padding="8,4"
+                                FontSize="{StaticResource FontSizeSmall}"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+            
+            <!-- Log Display -->
+            <ScrollViewer Grid.Row="1" 
+                          x:Name="LogScrollViewer"
+                          VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Auto"
+                          Padding="8">
+                <ItemsControl ItemsSource="{Binding FilteredLogs}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Margin="0,1" 
+                                    Padding="4,2"
+                                    CornerRadius="2"
+                                    Background="{Binding Level, Converter={x:Static vm:LogEventConverters.LevelToBackgroundConverter}}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    
+                                    <TextBlock Grid.Column="0" 
+                                               Text="{Binding Timestamp, StringFormat='{}{0:HH:mm:ss}'}" 
+                                               FontFamily="Consolas,monospace"
+                                               FontSize="{StaticResource FontSizeSmall}"
+                                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                               Margin="0,0,8,0"/>
+                                    
+                                    <TextBlock Grid.Column="1" 
+                                               Text="{Binding LevelString}" 
+                                               FontFamily="Consolas,monospace"
+                                               FontSize="{StaticResource FontSizeSmall}"
+                                               FontWeight="SemiBold"
+                                               Foreground="{Binding Level, Converter={x:Static vm:LogEventConverters.LevelToForegroundConverter}}"
+                                               MinWidth="50"
+                                               Margin="0,0,8,0"/>
+                                    
+                                    <TextBlock Grid.Column="2" 
+                                               Text="{Binding Category}" 
+                                               FontSize="{StaticResource FontSizeSmall}"
+                                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                               Margin="0,0,8,0"/>
+                                    
+                                    <TextBlock Grid.Column="3" 
+                                               Text="{Binding FormattedMessage}" 
+                                               TextWrapping="Wrap"
+                                               FontSize="{StaticResource FontSizeSmall}"
+                                               FontFamily="Consolas,monospace"/>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Grid>
+    </Border>
+
+</UserControl>

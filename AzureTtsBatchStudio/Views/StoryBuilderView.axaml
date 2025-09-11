@@ -497,14 +497,15 @@
                                       MaxHeight="300">
                             <Grid Margin="4"
                                   ColumnDefinitions="2*,Auto,3*"
-                                  RowDefinitions="Auto,Auto,Auto,Auto"
+                                  RowDefinitions="Auto,Auto,Auto"
                                   MaxWidth="340">
                                 <!-- Left: labels + numeric boxes -->
                                 <StackPanel Grid.Column="0" Spacing="16" Margin="0,0,8,0">
                                     <StackPanel>
                                         <TextBlock Text="Temperature" FontWeight="SemiBold" FontSize="{StaticResource FontSizeSmall}"/>
                                         <NumericUpDown Minimum="0" Maximum="2" Increment="0.01" FormatString="F2"
-                                                       Value="{Binding Temperature, Mode=TwoWay}" Width="90"
+                                                       Value="{Binding Temperature, Mode=TwoWay}" 
+                                                       MinWidth="80" MaxWidth="120"
                                                        BorderBrush="{DynamicResource TextControlElevationBorderBrush}"
                                                        CornerRadius="3"
                                                        FontSize="{StaticResource FontSizeSmall}"/>
@@ -513,7 +514,8 @@
                                     <StackPanel>
                                         <TextBlock Text="Top P" FontWeight="SemiBold" FontSize="{StaticResource FontSizeSmall}"/>
                                         <NumericUpDown Minimum="0" Maximum="1" Increment="0.01" FormatString="F2"
-                                                       Value="{Binding TopP, Mode=TwoWay}" Width="90"
+                                                       Value="{Binding TopP, Mode=TwoWay}" 
+                                                       MinWidth="80" MaxWidth="120"
                                                        BorderBrush="{DynamicResource TextControlElevationBorderBrush}"
                                                        CornerRadius="3"
                                                        FontSize="{StaticResource FontSizeSmall}"/>
@@ -522,7 +524,8 @@
                                     <StackPanel>
                                         <TextBlock Text="K Recent Parts" FontWeight="SemiBold" FontSize="{StaticResource FontSizeSmall}"/>
                                         <NumericUpDown Minimum="0" Maximum="20" Increment="1"
-                                                       Value="{Binding KRecentParts, Mode=TwoWay}" Width="90"
+                                                       Value="{Binding KRecentParts, Mode=TwoWay}" 
+                                                       MinWidth="80" MaxWidth="120"
                                                        BorderBrush="{DynamicResource TextControlElevationBorderBrush}"
                                                        CornerRadius="3"
                                                        FontSize="{StaticResource FontSizeSmall}"/>
@@ -566,51 +569,56 @@
                         </ScrollViewer>
                         
                         <!-- Other Parameters (without sliders) -->
-                        <StackPanel>
-                            <TextBlock Text="Max Output Tokens" FontWeight="SemiBold" FontSize="{StaticResource FontSizeMedium}" Margin="0,0,0,4"/>
-                            <NumericUpDown Value="{Binding MaxOutputTokens}" 
-                                           Minimum="1" Maximum="8192" Increment="256"
-                                           BorderBrush="{DynamicResource TextControlElevationBorderBrush}"
-                                           CornerRadius="4"/>
-                        </StackPanel>
-                        
-                        <!-- Context Budget -->
-                        <StackPanel>
-                            <TextBlock Text="Context Budget" FontWeight="SemiBold" FontSize="{StaticResource FontSizeMedium}" Margin="0,0,0,4"/>
-                            <NumericUpDown Value="{Binding ContextBudgetTokens}" 
-                                           Minimum="1000" Maximum="128000" Increment="1000"
-                                           BorderBrush="{DynamicResource TextControlElevationBorderBrush}"
-                                           CornerRadius="4"/>
-                        </StackPanel>
-                        
-                        <!-- Streaming Toggle -->
-                        <CheckBox IsChecked="{Binding Streaming}" Content="Streaming" FontWeight="SemiBold"/>
-                        
-                        <!-- Duration Goal -->
-                        <StackPanel>
-                            <TextBlock Text="Target Duration (minutes)" FontWeight="SemiBold" FontSize="{StaticResource FontSizeMedium}" Margin="0,0,0,4"/>
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-                                <NumericUpDown Grid.Column="0" Value="{Binding TargetMinutes}" 
-                                               Minimum="0" Maximum="1000" Increment="5"
+                        <StackPanel Spacing="12" Margin="0,16,0,0">
+                            <StackPanel>
+                                <TextBlock Text="Max Output Tokens" FontWeight="SemiBold" FontSize="{StaticResource FontSizeMedium}" Margin="0,0,0,4"/>
+                                <NumericUpDown Value="{Binding MaxOutputTokens}" 
+                                               Minimum="1" Maximum="8192" Increment="256"
+                                               MinWidth="100" MaxWidth="200"
                                                BorderBrush="{DynamicResource TextControlElevationBorderBrush}"
                                                CornerRadius="4"/>
-                                <TextBlock Grid.Column="1" Text="{Binding TargetWordCount, StringFormat='{} = {0} words'}" 
-                                           VerticalAlignment="Center" Margin="8,0,0,0"
-                                           FontSize="{StaticResource FontSizeSmall}" Opacity="0.7"/>
-                            </Grid>
-                        </StackPanel>
-                        
-                        <!-- WPM -->
-                        <StackPanel>
-                            <TextBlock Text="Words per Minute" FontWeight="SemiBold" FontSize="{StaticResource FontSizeMedium}" Margin="0,0,0,4"/>
-                            <NumericUpDown Value="{Binding Wpm}" 
-                                           Minimum="100" Maximum="300" Increment="10"
-                                           BorderBrush="{DynamicResource TextControlElevationBorderBrush}"
-                                           CornerRadius="4"/>
+                            </StackPanel>
+                            
+                            <!-- Context Budget -->
+                            <StackPanel>
+                                <TextBlock Text="Context Budget" FontWeight="SemiBold" FontSize="{StaticResource FontSizeMedium}" Margin="0,0,0,4"/>
+                                <NumericUpDown Value="{Binding ContextBudgetTokens}" 
+                                               Minimum="1000" Maximum="128000" Increment="1000"
+                                               MinWidth="100" MaxWidth="200"
+                                               BorderBrush="{DynamicResource TextControlElevationBorderBrush}"
+                                               CornerRadius="4"/>
+                            </StackPanel>
+                            
+                            <!-- Streaming Toggle -->
+                            <CheckBox IsChecked="{Binding Streaming}" Content="Streaming" FontWeight="SemiBold"/>
+                            
+                            <!-- Duration Goal -->
+                            <StackPanel>
+                                <TextBlock Text="Target Duration (minutes)" FontWeight="SemiBold" FontSize="{StaticResource FontSizeMedium}" Margin="0,0,0,4"/>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="120"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <NumericUpDown Grid.Column="0" Value="{Binding TargetMinutes}" 
+                                                   Minimum="0" Maximum="1000" Increment="5"
+                                                   BorderBrush="{DynamicResource TextControlElevationBorderBrush}"
+                                                   CornerRadius="4"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding TargetWordCount, StringFormat='{} = {0} words'}" 
+                                               VerticalAlignment="Center" Margin="8,0,0,0"
+                                               FontSize="{StaticResource FontSizeSmall}" Opacity="0.7"/>
+                                </Grid>
+                            </StackPanel>
+                            
+                            <!-- WPM -->
+                            <StackPanel>
+                                <TextBlock Text="Words per Minute" FontWeight="SemiBold" FontSize="{StaticResource FontSizeMedium}" Margin="0,0,0,4"/>
+                                <NumericUpDown Value="{Binding Wpm}" 
+                                               Minimum="100" Maximum="300" Increment="10"
+                                               MinWidth="100" MaxWidth="200"
+                                               BorderBrush="{DynamicResource TextControlElevationBorderBrush}"
+                                               CornerRadius="4"/>
+                            </StackPanel>
                         </StackPanel>
                     </StackPanel>
                 </ScrollViewer>
