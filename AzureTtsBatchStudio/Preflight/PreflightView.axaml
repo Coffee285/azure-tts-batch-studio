@@ -1,0 +1,254 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:preflight="using:AzureTtsBatchStudio.Preflight"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="700"
+             x:Class="AzureTtsBatchStudio.Preflight.PreflightView"
+             x:DataType="preflight:PreflightViewModel">
+
+    <Design.DataContext>
+        <preflight:PreflightViewModel/>
+    </Design.DataContext>
+
+    <Grid Margin="16">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" MinWidth="300"/>
+            <ColumnDefinition Width="4"/>
+            <ColumnDefinition Width="300" MinWidth="250"/>
+        </Grid.ColumnDefinitions>
+        
+        <!-- Left Pane - Text Input and Diff -->
+        <Grid Grid.Column="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            
+            <!-- Header -->
+            <Border Grid.Row="0" 
+                    BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" 
+                    BorderThickness="1" 
+                    CornerRadius="{StaticResource CardCornerRadius}" 
+                    Padding="{StaticResource LargeMargin}"
+                    Margin="0,0,0,8"
+                    Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
+                <StackPanel>
+                    <TextBlock Text="Preflight Text Guard" 
+                               FontFamily="{StaticResource PrimaryFont}"
+                               FontSize="{StaticResource FontSizeXLarge}"
+                               FontWeight="SemiBold"/>
+                    <TextBlock Text="Detect and correct text encoding issues (mojibake)" 
+                               FontSize="{StaticResource FontSizeSmall}"
+                               Opacity="0.7"
+                               Margin="0,4,0,0"/>
+                </StackPanel>
+            </Border>
+            
+            <!-- Text Input and Results -->
+            <Border Grid.Row="1" 
+                    BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" 
+                    BorderThickness="1" 
+                    CornerRadius="{StaticResource CardCornerRadius}" 
+                    Padding="{StaticResource LargeMargin}"
+                    Margin="0,0,0,8"
+                    Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="4"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    
+                    <!-- Input Text Header -->
+                    <TextBlock Grid.Row="0" Text="Input Text" 
+                               FontWeight="SemiBold" 
+                               FontSize="{StaticResource FontSizeMedium}"
+                               Margin="0,0,0,8"/>
+                    
+                    <!-- Input Text Area -->
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <TextBox Text="{Binding InputText}" 
+                                 AcceptsReturn="True" 
+                                 TextWrapping="Wrap" 
+                                 MinHeight="150"
+                                 Background="Transparent"
+                                 BorderThickness="1"
+                                 BorderBrush="{DynamicResource TextControlElevationBorderBrush}"
+                                 CornerRadius="4"
+                                 Padding="8"
+                                 FontSize="{StaticResource FontSizeMedium}"
+                                 Watermark="Paste text with potential encoding issues here..."/>
+                    </ScrollViewer>
+                    
+                    <!-- Splitter -->
+                    <GridSplitter Grid.Row="2" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}" HorizontalAlignment="Stretch"/>
+                    
+                    <!-- Fixed Text Header -->
+                    <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,8,0,8">
+                        <TextBlock Text="Fixed Text" 
+                                   FontWeight="SemiBold" 
+                                   FontSize="{StaticResource FontSizeMedium}"/>
+                        <TextBlock Text="{Binding Strategy, StringFormat='({0})'}" 
+                                   FontSize="{StaticResource FontSizeSmall}"
+                                   Opacity="0.7"
+                                   Margin="8,0,0,0"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+                    
+                    <!-- Fixed Text Area -->
+                    <ScrollViewer Grid.Row="4" VerticalScrollBarVisibility="Auto">
+                        <TextBox Text="{Binding FixedText}" 
+                                 AcceptsReturn="True" 
+                                 TextWrapping="Wrap" 
+                                 MinHeight="150"
+                                 Background="Transparent"
+                                 BorderThickness="1"
+                                 BorderBrush="{DynamicResource TextControlElevationBorderBrush}"
+                                 CornerRadius="4"
+                                 Padding="8"
+                                 FontSize="{StaticResource FontSizeMedium}"
+                                 IsReadOnly="True"
+                                 Watermark="Fixed text will appear here after analysis..."/>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+            
+            <!-- Action Buttons -->
+            <Border Grid.Row="2" 
+                    BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" 
+                    BorderThickness="1" 
+                    CornerRadius="{StaticResource CardCornerRadius}" 
+                    Padding="{StaticResource LargeMargin}"
+                    Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button Content="Run Preflight" Command="{Binding RunPreflightCommand}" 
+                            IsEnabled="{Binding !IsBusy}"
+                            Background="{StaticResource AccentBrush}"
+                            Foreground="White"
+                            BorderBrush="{StaticResource AccentBrush}"
+                            BorderThickness="1"
+                            CornerRadius="{StaticResource ButtonCornerRadius}"
+                            Padding="16,8"
+                            FontWeight="SemiBold"/>
+                    <Button Content="Accept Fix" Command="{Binding AcceptFixCommand}" 
+                            IsEnabled="{Binding FixedText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                            Background="{StaticResource SuccessBrush}"
+                            Foreground="White"
+                            BorderBrush="{StaticResource SuccessBrush}"
+                            BorderThickness="1"
+                            CornerRadius="{StaticResource ButtonCornerRadius}"
+                            Padding="16,8"
+                            FontWeight="SemiBold"/>
+                    <Button Content="Copy Fixed" Command="{Binding CopyFixedCommand}" 
+                            IsEnabled="{Binding FixedText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                            Background="Transparent"
+                            BorderBrush="{StaticResource AccentBrush}"
+                            Foreground="{StaticResource AccentBrush}"
+                            BorderThickness="1"
+                            CornerRadius="{StaticResource ButtonCornerRadius}"
+                            Padding="16,8"
+                            FontWeight="SemiBold"/>
+                    <Button Content="Export Report" Command="{Binding ExportReportCommand}" 
+                            IsEnabled="{Binding FixedText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                            Background="Transparent"
+                            BorderBrush="{StaticResource AccentBrush}"
+                            Foreground="{StaticResource AccentBrush}"
+                            BorderThickness="1"
+                            CornerRadius="{StaticResource ButtonCornerRadius}"
+                            Padding="16,8"
+                            FontWeight="SemiBold"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+        
+        <!-- Splitter -->
+        <GridSplitter Grid.Column="1" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"/>
+        
+        <!-- Right Pane - Report and Settings -->
+        <Grid Grid.Column="2">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="4"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            
+            <!-- Report -->
+            <Border Grid.Row="0" 
+                    BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" 
+                    BorderThickness="1" 
+                    CornerRadius="{StaticResource CardCornerRadius}" 
+                    Padding="{StaticResource LargeMargin}"
+                    Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    
+                    <!-- Report Header -->
+                    <StackPanel Grid.Row="0" Margin="0,0,0,12">
+                        <TextBlock Text="Analysis Report" 
+                                   FontWeight="SemiBold" 
+                                   FontSize="{StaticResource FontSizeMedium}"/>
+                        <StackPanel Orientation="Horizontal" Spacing="16" Margin="0,8,0,0">
+                            <TextBlock Text="{Binding ScoreBefore, StringFormat='Before: {0}'}" 
+                                       FontSize="{StaticResource FontSizeSmall}"/>
+                            <TextBlock Text="{Binding ScoreAfter, StringFormat='After: {0}'}" 
+                                       FontSize="{StaticResource FontSizeSmall}"/>
+                        </StackPanel>
+                    </StackPanel>
+                    
+                    <!-- Report Items -->
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding ReportItems}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding}" 
+                                               FontSize="{StaticResource FontSizeSmall}"
+                                               Margin="0,2"
+                                               TextWrapping="Wrap"/>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+            
+            <!-- Splitter -->
+            <GridSplitter Grid.Row="1" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}" HorizontalAlignment="Stretch"/>
+            
+            <!-- Settings -->
+            <Border Grid.Row="2" 
+                    BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" 
+                    BorderThickness="1" 
+                    CornerRadius="{StaticResource CardCornerRadius}" 
+                    Padding="{StaticResource LargeMargin}"
+                    Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="Settings" 
+                               FontWeight="SemiBold" 
+                               FontSize="{StaticResource FontSizeMedium}"/>
+                    
+                    <CheckBox IsChecked="{Binding AutoFixEnabled}" 
+                              Content="Auto-fix before render"
+                              Command="{Binding ToggleAutoFixCommand}"/>
+                    
+                    <TextBlock Text="{Binding StatusMessage}" 
+                               FontSize="{StaticResource FontSizeSmall}"
+                               Opacity="0.7"
+                               TextWrapping="Wrap"/>
+                    
+                    <ProgressBar IsIndeterminate="{Binding IsBusy}"
+                                 IsVisible="{Binding IsBusy}"
+                                 Height="4"
+                                 CornerRadius="2"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Grid>
+
+</UserControl>
