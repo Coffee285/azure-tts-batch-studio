@@ -27,7 +27,7 @@ namespace AzureTtsBatchStudio.ViewModels
         private CancellationTokenSource? _cancellationTokenSource;
 
         [ObservableProperty]
-        private string _inputText = "Welcome to Azure TTS Batch Studio! This is a sample text to convert to speech.";
+        private string _inputText = "";
 
         [ObservableProperty]
         private ObservableCollection<LanguageInfo> _availableLanguages = new();

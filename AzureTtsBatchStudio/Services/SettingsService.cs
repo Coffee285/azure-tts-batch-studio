@@ -68,7 +68,9 @@ namespace AzureTtsBatchStudio.Services
                 // Return default settings if file doesn't exist
                 var defaultSettings = new AppSettings
                 {
-                    DefaultOutputDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "TTS Output")
+                    DefaultOutputDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "TTS Output"),
+                    DefaultSpeakingRate = 1.0,
+                    DefaultPitch = 0.0
                 };
                 
                 // Create default output directory
