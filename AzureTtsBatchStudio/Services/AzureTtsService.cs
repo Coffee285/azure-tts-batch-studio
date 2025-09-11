@@ -139,33 +139,53 @@ namespace AzureTtsBatchStudio.Services
                     using var synthesizer = new SpeechSynthesizer(config, audioConfig);
                     
                     SpeechSynthesisResult result = await synthesizer.SpeakSsmlAsync(ssml);
+                    
+                    // Handle different result reasons with specific exceptions
+                    if (result.Reason == ResultReason.Canceled)
+                    {
+                        var cancellation = SpeechSynthesisCancellationDetails.FromResult(result);
+                        throw GetTtsExceptionFromCancellation(cancellation);
+                    }
+                    else if (result.Reason != ResultReason.SynthesizingAudioCompleted)
+                    {
+                        throw new TtsException(TtsErrorType.Unknown, 
+                            $"Speech synthesis failed with reason: {result.Reason}");
+                    }
                     if (request.Format.Name.ToUpperInvariant() != "WAV")
                     {
                         // For MP3 and OGG, we need to get the audio data and write it to file
-                        if (result.Reason == ResultReason.SynthesizingAudioCompleted && result.AudioData.Length > 0)
+                        if (result.AudioData.Length > 0)
                         {
                             await File.WriteAllBytesAsync(request.OutputFileName, result.AudioData);
                             // Check that the file was written and has the expected length
                             var fileInfo = new FileInfo(request.OutputFileName);
                             if (!fileInfo.Exists || fileInfo.Length != result.AudioData.Length)
                             {
-                                return false;
+                                throw new TtsException(TtsErrorType.Unknown, 
+                                    "Failed to write audio file or file size mismatch");
                             }
                             return true;
                         }
                         else
                         {
-                            return false;
+                            throw new TtsException(TtsErrorType.Unknown, 
+                                "Speech synthesis completed but no audio data was returned");
                         }
                     }
                     
-                    return result.Reason == ResultReason.SynthesizingAudioCompleted;
+                    return true;
                 }
+            }
+            catch (TtsException)
+            {
+                // Re-throw TTS exceptions as-is
+                throw;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error generating speech: {ex.Message}");
-                return false;
+                // Wrap other exceptions
+                throw new TtsException(TtsErrorType.NetworkError, 
+                    $"Error generating speech: {ex.Message}", ex);
             }
         }
 
@@ -295,6 +315,44 @@ namespace AzureTtsBatchStudio.Services
             var trimmed = text.Trim();
             return trimmed.StartsWith("<speak", StringComparison.OrdinalIgnoreCase) && 
                    trimmed.EndsWith("</speak>", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static TtsException GetTtsExceptionFromCancellation(SpeechSynthesisCancellationDetails cancellation)
+        {
+            var errorMessage = $"Speech synthesis cancelled: {cancellation.Reason}";
+            if (!string.IsNullOrEmpty(cancellation.ErrorDetails))
+            {
+                errorMessage += $" - {cancellation.ErrorDetails}";
+            }
+
+            // Check error details for specific patterns
+            var errorDetails = cancellation.ErrorDetails?.ToLowerInvariant() ?? "";
+            
+            if (errorDetails.Contains("too large") || errorDetails.Contains("payload") || 
+                errorDetails.Contains("413") || errorDetails.Contains("request entity too large"))
+            {
+                return new TtsException(TtsErrorType.PayloadTooLarge, errorMessage, cancellation.ErrorCode.ToString());
+            }
+            
+            if (errorDetails.Contains("rate") || errorDetails.Contains("429") || 
+                errorDetails.Contains("throttle") || errorDetails.Contains("quota"))
+            {
+                return new TtsException(TtsErrorType.RateLimited, errorMessage, cancellation.ErrorCode.ToString());
+            }
+            
+            if (errorDetails.Contains("503") || errorDetails.Contains("502") || 
+                errorDetails.Contains("500") || errorDetails.Contains("unavailable"))
+            {
+                return new TtsException(TtsErrorType.ServiceUnavailable, errorMessage, cancellation.ErrorCode.ToString());
+            }
+            
+            if (errorDetails.Contains("400") || errorDetails.Contains("invalid") || 
+                errorDetails.Contains("bad request"))
+            {
+                return new TtsException(TtsErrorType.InvalidRequest, errorMessage, cancellation.ErrorCode.ToString());
+            }
+            
+            return new TtsException(TtsErrorType.Unknown, errorMessage, cancellation.ErrorCode.ToString());
         }
 
         private static string GetLanguageDisplayName(string locale)
