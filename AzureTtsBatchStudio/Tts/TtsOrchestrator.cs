@@ -202,7 +202,8 @@ namespace AzureTtsBatchStudio.Tts
         private static TtsRequest CreatePartRequest(TtsRequest baseRequest, TtsPart part, string outputDir)
         {
             var extension = Path.GetExtension(baseRequest.OutputFileName);
-            var partFileName = $"part_{part.Index:D3}{extension}";
+            var baseFileName = Path.GetFileNameWithoutExtension(baseRequest.OutputFileName);
+            var partFileName = $"{baseFileName}_part_{part.Index:D3}{extension}";
             var partPath = Path.Combine(outputDir, partFileName);
 
             return new TtsRequest
