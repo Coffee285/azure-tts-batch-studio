@@ -107,13 +107,13 @@ namespace AzureTtsBatchStudio.Tests
         }
         
         [Fact]
-        public void SettingsService_Should_Return_Correct_Defaults_When_No_File_Exists()
+        public async Task SettingsService_Should_Return_Correct_Defaults_When_No_File_Exists()
         {
             // Arrange
             var settingsService = new SettingsService();
             
             // Act
-            var settings = settingsService.LoadSettingsAsync().Result;
+            var settings = await settingsService.LoadSettingsAsync();
             
             // Assert
             Assert.Equal(1.0, settings.DefaultSpeakingRate);
