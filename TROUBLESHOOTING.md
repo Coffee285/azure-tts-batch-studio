@@ -4,6 +4,7 @@ If you're experiencing issues where the application loads (appears in Task Manag
 
 ## Recent Fixes Applied (Latest Version)
 
+✅ **CRITICAL FIX: XAML Static Resource Ordering** - Fixed "Static resource 'FontSizeSmall' not found" error that prevented application from loading
 ✅ **Fixed async initialization issues** - Removed problematic `async void` methods that could cause silent failures
 ✅ **Added explicit window show** - Window is now explicitly shown and activated
 ✅ **Improved error handling** - Better error logging and user feedback
@@ -42,6 +43,11 @@ Application framework initialization completed successfully.
 ```
 
 ## Common Issues and Solutions
+
+### Issue: Application fails to load with XAML resource error ✅ FIXED
+**Previous Issue**: "Static resource 'FontSizeSmall' not found" error prevented application from starting
+**Root Cause**: XAML static resources were referenced before being defined in App.axaml
+**Solution**: Reordered App.axaml to define resources before styles, ensuring proper XAML initialization.
 
 ### Issue: Application starts but no window appears ✅ FIXED
 **Previous Issue**: Async initialization problems and missing explicit Show() calls
