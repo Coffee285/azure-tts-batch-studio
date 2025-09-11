@@ -3,6 +3,7 @@
         xmlns:vm="using:AzureTtsBatchStudio.ViewModels"
         xmlns:views="using:AzureTtsBatchStudio.Views"
         xmlns:preflight="using:AzureTtsBatchStudio.Preflight"
+        xmlns:logging="using:AzureTtsBatchStudio.Logging"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
@@ -56,6 +57,14 @@
                 </StackPanel>
                 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                    <Button Content="Logs" Command="{Binding ToggleLogConsoleCommand}" 
+                            Background="Transparent"
+                            BorderBrush="{StaticResource AccentBrush}"
+                            Foreground="{StaticResource AccentBrush}"
+                            BorderThickness="1"
+                            CornerRadius="{StaticResource ButtonCornerRadius}"
+                            Padding="12,6"
+                            FontWeight="SemiBold"/>
                     <Button Content="Settings" Command="{Binding OpenSettingsCommand}" 
                             Background="Transparent"
                             BorderBrush="{StaticResource AccentBrush}"
@@ -68,23 +77,38 @@
             </Grid>
         </Border>
         
-        <!-- Tab Control -->
-        <TabControl Grid.Row="1">
-            <!-- TTS Tab -->
-            <TabItem Header="Text-to-Speech">
-                <views:TtsTabView DataContext="{Binding}"/>
-            </TabItem>
+        <!-- Tab Control and Log Console -->
+        <Grid Grid.Row="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
             
-            <!-- Preflight Tab -->
-            <TabItem Header="Preflight">
-                <preflight:PreflightView/>
-            </TabItem>
+            <!-- Tab Control -->
+            <TabControl Grid.Row="0">
+                <!-- TTS Tab -->
+                <TabItem Header="Text-to-Speech">
+                    <views:TtsTabView DataContext="{Binding}"/>
+                </TabItem>
+                
+                <!-- Preflight Tab -->
+                <TabItem Header="Preflight">
+                    <preflight:PreflightView/>
+                </TabItem>
+                
+                <!-- Story Builder Tab -->
+                <TabItem Header="Story Builder">
+                    <views:StoryBuilderView/>
+                </TabItem>
+            </TabControl>
             
-            <!-- Story Builder Tab -->
-            <TabItem Header="Story Builder">
-                <views:StoryBuilderView/>
-            </TabItem>
-        </TabControl>
+            <!-- Log Console -->
+            <logging:LogConsoleView Grid.Row="1" 
+                                    DataContext="{Binding LogConsoleViewModel}"
+                                    IsVisible="{Binding $parent[Window].DataContext.IsLogConsoleOpen}"
+                                    Height="240"
+                                    Margin="0,8,0,0"/>
+        </Grid>
     </Grid>
 
 </Window>

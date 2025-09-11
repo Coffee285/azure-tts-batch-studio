@@ -53,7 +53,7 @@
                                  MinWidth="120"/>
                         
                         <Button Content="Clear" 
-                                Command="{Binding $parent[UserControl].((vm:LogViewModel)DataContext).ClearLogsCommand}"
+                                Command="{Binding ClearLogsCommand}"
                                 Background="Transparent"
                                 BorderBrush="{StaticResource AccentBrush}"
                                 Foreground="{StaticResource AccentBrush}"

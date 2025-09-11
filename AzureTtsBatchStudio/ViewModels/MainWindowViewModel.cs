@@ -75,6 +75,37 @@ namespace AzureTtsBatchStudio.ViewModels
         [ObservableProperty]
         private int _totalCount = 0;
 
+        // TTS Chunking and Merge Options
+        [ObservableProperty]
+        private AzureTtsBatchStudio.Tts.MergeMode _mergeMode = AzureTtsBatchStudio.Tts.MergeMode.SingleMergedMp3;
+
+        [ObservableProperty]
+        private int _targetChunkChars = 2000;
+
+        [ObservableProperty]
+        private int _minChunkChars = 1400;
+
+        [ObservableProperty]
+        private int _safetyMarginChars = 200;
+
+        [ObservableProperty]
+        private bool _respectSentenceBoundaries = true;
+
+        [ObservableProperty]
+        private bool _keepShortParagraphsTogether = true;
+
+        // Log Console
+        [ObservableProperty]
+        private bool _isLogConsoleOpen = false;
+
+        public AzureTtsBatchStudio.Logging.LogViewModel LogConsoleViewModel { get; }
+
+        [RelayCommand]
+        private void ToggleLogConsole()
+        {
+            IsLogConsoleOpen = !IsLogConsoleOpen;
+        }
+
         public MainWindowViewModel() : this(new AzureTtsService(), new SettingsService())
         {
         }
@@ -83,6 +114,9 @@ namespace AzureTtsBatchStudio.ViewModels
         {
             _ttsService = ttsService;
             _settingsService = settingsService;
+            
+            // Initialize logger
+            LogConsoleViewModel = new AzureTtsBatchStudio.Logging.LogViewModel();
             
             // Set initial status message
             StatusMessage = "Initializing application...";
@@ -545,29 +579,50 @@ namespace AzureTtsBatchStudio.ViewModels
                 IsProcessing = true;
                 _cancellationTokenSource = new CancellationTokenSource();
 
-                var requests = CreateTtsRequests();
-                TotalCount = requests.Count;
-                ProcessedCount = 0;
+                // Create TTS render options
+                var options = new AzureTtsBatchStudio.Tts.TtsRenderOptions
+                {
+                    MergeMode = MergeMode,
+                    TargetChunkChars = TargetChunkChars,
+                    MinChunkChars = MinChunkChars,
+                    SafetyMarginChars = SafetyMarginChars,
+                    RespectSentenceBoundaries = RespectSentenceBoundaries,
+                    KeepShortParagraphsTogether = KeepShortParagraphsTogether
+                };
 
-                var progress = new Progress<ProcessingProgress>(OnProgressUpdated);
+                // Create base TTS request
+                var baseRequest = CreateBaseTtsRequest();
+                
+                // Create orchestrator
+                var orchestrator = new AzureTtsBatchStudio.Tts.TtsOrchestrator(_ttsService);
+                
+                // Subscribe to progress events
+                orchestrator.StatusChanged += (status) => 
+                {
+                    Avalonia.Threading.Dispatcher.UIThread.Post(() => StatusMessage = status);
+                };
+                
+                orchestrator.ProgressChanged += (current, total) => 
+                {
+                    Avalonia.Threading.Dispatcher.UIThread.Post(() => 
+                    {
+                        ProcessedCount = current;
+                        TotalCount = total;
+                        ProgressValue = total > 0 ? (current * 100.0 / total) : 0;
+                    });
+                };
 
                 StatusMessage = "Starting speech generation...";
                 
-                var success = await _ttsService.GenerateBatchSpeechAsync(
-                    requests, 
+                string result = await orchestrator.ProcessTextAsync(
+                    InputText,
+                    options,
+                    baseRequest,
                     _currentSettings.AzureSubscriptionKey, 
                     _currentSettings.AzureRegion,
-                    progress,
                     _cancellationTokenSource.Token);
 
-                if (success)
-                {
-                    StatusMessage = "Speech generation completed successfully";
-                }
-                else
-                {
-                    StatusMessage = "Speech generation completed with errors";
-                }
+                StatusMessage = $"Speech generation completed! Output: {Path.GetFileName(result)}";
             }
             catch (OperationCanceledException)
             {
@@ -580,9 +635,34 @@ namespace AzureTtsBatchStudio.ViewModels
             finally
             {
                 IsProcessing = false;
+                ProgressValue = 0;
                 _cancellationTokenSource?.Dispose();
                 _cancellationTokenSource = null;
             }
+        }
+
+        private TtsRequest CreateBaseTtsRequest()
+        {
+            var extension = SelectedAudioFormat.ToLowerInvariant() switch
+            {
+                "mp3" => ".mp3",
+                "ogg" => ".ogg",
+                _ => ".wav"
+            };
+
+            var baseFileName = $"speech_{DateTime.Now:yyyyMMdd_HHmmss}";
+            var outputPath = Path.Combine(OutputDirectory, baseFileName + extension);
+
+            return new TtsRequest
+            {
+                Text = "", // Will be filled by orchestrator
+                OutputFileName = outputPath,
+                Voice = SelectedVoice,
+                SpeakingRate = SpeakingRate,
+                Pitch = Pitch,
+                Format = new AudioFormat { Name = SelectedAudioFormat },
+                Quality = new QualityOption { Name = SelectedQuality }
+            };
         }
 
         [RelayCommand]
