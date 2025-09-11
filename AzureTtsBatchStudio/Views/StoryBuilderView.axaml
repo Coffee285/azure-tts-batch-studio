@@ -486,45 +486,86 @@
                                        TextWrapping="Wrap"/>
                         </StackPanel>
                         
-                        <!-- Temperature -->
-                        <StackPanel>
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="60"/>
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="Temperature" FontWeight="SemiBold" FontSize="{StaticResource FontSizeMedium}" VerticalAlignment="Center"/>
-                                <NumericUpDown Grid.Column="1" Value="{Binding Temperature}" 
-                                               Minimum="0" Maximum="2" Increment="0.01" FormatString="F2"
-                                               BorderBrush="{DynamicResource TextControlElevationBorderBrush}"
-                                               CornerRadius="3"
-                                               FontSize="{StaticResource FontSizeSmall}"/>
-                            </Grid>
-                            <Slider Value="{Binding Temperature}" 
-                                    Minimum="0" Maximum="2" TickFrequency="0.1" IsSnapToTickEnabled="False"
-                                    Margin="0,4,0,0"/>
-                        </StackPanel>
+                        <!-- Adjustable Parameters Section with GridSplitter -->
+                        <TextBlock Text="Adjustable Parameters" 
+                                   FontWeight="SemiBold" 
+                                   FontSize="{StaticResource FontSizeMedium}"
+                                   Margin="0,16,0,8"/>
                         
-                        <!-- Top P -->
-                        <StackPanel>
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="60"/>
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="Top P" FontWeight="SemiBold" FontSize="{StaticResource FontSizeMedium}" VerticalAlignment="Center"/>
-                                <NumericUpDown Grid.Column="1" Value="{Binding TopP}" 
-                                               Minimum="0" Maximum="1" Increment="0.01" FormatString="F2"
-                                               BorderBrush="{DynamicResource TextControlElevationBorderBrush}"
-                                               CornerRadius="3"
-                                               FontSize="{StaticResource FontSizeSmall}"/>
+                        <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+                                      VerticalScrollBarVisibility="Auto"
+                                      MaxHeight="300">
+                            <Grid Margin="4"
+                                  ColumnDefinitions="2*,Auto,3*"
+                                  RowDefinitions="Auto,Auto,Auto,Auto"
+                                  MaxWidth="340">
+                                <!-- Left: labels + numeric boxes -->
+                                <StackPanel Grid.Column="0" Spacing="16" Margin="0,0,8,0">
+                                    <StackPanel>
+                                        <TextBlock Text="Temperature" FontWeight="SemiBold" FontSize="{StaticResource FontSizeSmall}"/>
+                                        <NumericUpDown Minimum="0" Maximum="2" Increment="0.01" FormatString="F2"
+                                                       Value="{Binding Temperature, Mode=TwoWay}" Width="90"
+                                                       BorderBrush="{DynamicResource TextControlElevationBorderBrush}"
+                                                       CornerRadius="3"
+                                                       FontSize="{StaticResource FontSizeSmall}"/>
+                                    </StackPanel>
+                                    
+                                    <StackPanel>
+                                        <TextBlock Text="Top P" FontWeight="SemiBold" FontSize="{StaticResource FontSizeSmall}"/>
+                                        <NumericUpDown Minimum="0" Maximum="1" Increment="0.01" FormatString="F2"
+                                                       Value="{Binding TopP, Mode=TwoWay}" Width="90"
+                                                       BorderBrush="{DynamicResource TextControlElevationBorderBrush}"
+                                                       CornerRadius="3"
+                                                       FontSize="{StaticResource FontSizeSmall}"/>
+                                    </StackPanel>
+                                    
+                                    <StackPanel>
+                                        <TextBlock Text="K Recent Parts" FontWeight="SemiBold" FontSize="{StaticResource FontSizeSmall}"/>
+                                        <NumericUpDown Minimum="0" Maximum="20" Increment="1"
+                                                       Value="{Binding KRecentParts, Mode=TwoWay}" Width="90"
+                                                       BorderBrush="{DynamicResource TextControlElevationBorderBrush}"
+                                                       CornerRadius="3"
+                                                       FontSize="{StaticResource FontSizeSmall}"/>
+                                    </StackPanel>
+                                </StackPanel>
+
+                                <!-- Splitter -->
+                                <GridSplitter Grid.Column="1" Width="6" Background="{DynamicResource ThemeAccentBrush}"
+                                              ResizeDirection="Columns" ShowsPreview="True" />
+
+                                <!-- Right: sliders with tick marks -->
+                                <StackPanel Grid.Column="2" Spacing="16">
+                                    <StackPanel>
+                                        <Slider Minimum="0" Maximum="2" TickFrequency="0.1" IsSnapToTickEnabled="False"
+                                                TickPlacement="BottomRight"
+                                                Value="{Binding Temperature, Mode=TwoWay}"/>
+                                        <TextBlock Text="{Binding Temperature, StringFormat='Temperature: {0:F2}'}"
+                                                   HorizontalAlignment="Right"
+                                                   FontSize="{StaticResource FontSizeSmall}"/>
+                                    </StackPanel>
+
+                                    <StackPanel>
+                                        <Slider Minimum="0" Maximum="1" TickFrequency="0.1" IsSnapToTickEnabled="False"
+                                                TickPlacement="BottomRight"
+                                                Value="{Binding TopP, Mode=TwoWay}"/>
+                                        <TextBlock Text="{Binding TopP, StringFormat='Top P: {0:F2}'}"
+                                                   HorizontalAlignment="Right"
+                                                   FontSize="{StaticResource FontSizeSmall}"/>
+                                    </StackPanel>
+
+                                    <StackPanel>
+                                        <Slider Minimum="0" Maximum="20" TickFrequency="1" IsSnapToTickEnabled="True"
+                                                TickPlacement="BottomRight"
+                                                Value="{Binding KRecentParts, Mode=TwoWay}"/>
+                                        <TextBlock Text="{Binding KRecentParts, StringFormat='K Parts: {0}'}"
+                                                   HorizontalAlignment="Right"
+                                                   FontSize="{StaticResource FontSizeSmall}"/>
+                                    </StackPanel>
+                                </StackPanel>
                             </Grid>
-                            <Slider Value="{Binding TopP}" 
-                                    Minimum="0" Maximum="1" TickFrequency="0.1" IsSnapToTickEnabled="False"
-                                    Margin="0,4,0,0"/>
-                        </StackPanel>
+                        </ScrollViewer>
                         
-                        <!-- Max Output Tokens -->
+                        <!-- Other Parameters (without sliders) -->
                         <StackPanel>
                             <TextBlock Text="Max Output Tokens" FontWeight="SemiBold" FontSize="{StaticResource FontSizeMedium}" Margin="0,0,0,4"/>
                             <NumericUpDown Value="{Binding MaxOutputTokens}" 
@@ -538,15 +579,6 @@
                             <TextBlock Text="Context Budget" FontWeight="SemiBold" FontSize="{StaticResource FontSizeMedium}" Margin="0,0,0,4"/>
                             <NumericUpDown Value="{Binding ContextBudgetTokens}" 
                                            Minimum="1000" Maximum="128000" Increment="1000"
-                                           BorderBrush="{DynamicResource TextControlElevationBorderBrush}"
-                                           CornerRadius="4"/>
-                        </StackPanel>
-                        
-                        <!-- K Recent Parts -->
-                        <StackPanel>
-                            <TextBlock Text="Recent Parts (K)" FontWeight="SemiBold" FontSize="{StaticResource FontSizeMedium}" Margin="0,0,0,4"/>
-                            <NumericUpDown Value="{Binding KRecentParts}" 
-                                           Minimum="0" Maximum="20" Increment="1"
                                            BorderBrush="{DynamicResource TextControlElevationBorderBrush}"
                                            CornerRadius="4"/>
                         </StackPanel>
