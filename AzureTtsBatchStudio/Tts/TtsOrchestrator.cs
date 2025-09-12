@@ -289,7 +289,7 @@ namespace AzureTtsBatchStudio.Tts
             var extension = Path.GetExtension(baseRequest.OutputFileName);
             var baseFileName = Path.GetFileNameWithoutExtension(baseRequest.OutputFileName);
             var partFileName = $"{baseFileName}_part_{part.Index:D3}{extension}";
-            var partPath = Path.Combine(outputDir, partFileName);
+            var partPath = Path.Combine(outputDir, partFileName).Replace('\\', '/');
 
             return new TtsRequest
             {
