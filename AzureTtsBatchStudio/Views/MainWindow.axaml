@@ -57,6 +57,14 @@
                 </StackPanel>
                 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                    <Button Content="Save Profile" Command="{Binding SaveProfileCommand}" 
+                            Background="{StaticResource SuccessBrush}"
+                            Foreground="White"
+                            BorderBrush="{StaticResource SuccessBrush}"
+                            BorderThickness="1"
+                            CornerRadius="{StaticResource ButtonCornerRadius}"
+                            Padding="16,8"
+                            FontWeight="SemiBold"/>
                     <Button Content="Logs" Command="{Binding ToggleLogConsoleCommand}" 
                             Background="Transparent"
                             BorderBrush="{StaticResource AccentBrush}"

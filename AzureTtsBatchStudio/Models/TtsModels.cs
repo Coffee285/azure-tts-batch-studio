@@ -10,6 +10,10 @@ namespace AzureTtsBatchStudio.Models
         public string Gender { get; set; } = string.Empty;
         public string Locale { get; set; } = string.Empty;
         public string VoiceType { get; set; } = string.Empty;
+        
+        // Prosody support flags - some voices (like OpenAI TTS models) may not support rate/pitch adjustments
+        public bool SupportsSpeakingRate { get; set; } = true;
+        public bool SupportsPitch { get; set; } = true;
 
         public override string ToString()
         {

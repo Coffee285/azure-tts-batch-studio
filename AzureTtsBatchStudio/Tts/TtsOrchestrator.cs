@@ -264,6 +264,16 @@ namespace AzureTtsBatchStudio.Tts
 
         private static string GenerateSSML(string text, TtsRequest baseRequest)
         {
+            // For voices that don't support prosody, generate simple SSML
+            if (!baseRequest.Voice.SupportsSpeakingRate && !baseRequest.Voice.SupportsPitch)
+            {
+                return $@"<speak version='1.0' xml:lang='en-US' xmlns='http://www.w3.org/2001/10/synthesis'>
+    <voice name='{baseRequest.Voice.Name}'>
+        {System.Security.SecurityElement.Escape(text)}
+    </voice>
+</speak>";
+            }
+            
             var rateString = baseRequest.SpeakingRate switch
             {
                 < 0.7 => "x-slow",
