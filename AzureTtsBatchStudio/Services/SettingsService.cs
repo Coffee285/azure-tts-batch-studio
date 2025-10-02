@@ -29,6 +29,18 @@ namespace AzureTtsBatchStudio.Services
         // Story Builder Settings
         public string OpenAIApiKey { get; set; } = string.Empty;
         public string ProjectsRootPath { get; set; } = string.Empty;
+        
+        // Story Builder V2 Settings
+        public bool StoryBuilderV2Enabled { get; set; } = false;
+        public string LlmProvider { get; set; } = "OpenAI"; // "OpenAI" or "AzureOpenAI"
+        public string LlmBaseUrl { get; set; } = "https://api.openai.com/v1";
+        public string LlmApiKey { get; set; } = string.Empty;
+        public string LlmModel { get; set; } = "gpt-4";
+        public string AzureOpenAIDeployment { get; set; } = string.Empty;
+        public double LlmTemperature { get; set; } = 0.8;
+        public double LlmTopP { get; set; } = 0.9;
+        public int LlmMaxTokens { get; set; } = 4000;
+        public double MaxCostPerProject { get; set; } = 10.0; // USD
     }
 
     public interface ISettingsService
