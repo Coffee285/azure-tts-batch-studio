@@ -157,8 +157,8 @@ The SSML builder automatically converts Markdown to SSML:
 
 Click **Render Beat** to generate audio:
 - Azure TTS synthesis
-- Background music integration (with ducking)
-- SFX placement
+- Background music integration (with ducking) *(Planned)*
+- SFX placement *(Planned)*
 - Export as WAV/MP3
 
 ## Templates
