@@ -83,15 +83,34 @@ namespace AzureTtsBatchStudio.Infrastructure.Llm
             var json = JsonSerializer.Serialize(requestBody);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            var response = await _retryPolicy.ExecuteAsync(async ct => 
+            await using (var response = await _retryPolicy.ExecuteAsync(async ct => 
                 await _httpClient.PostAsync("/chat/completions", content, ct), 
-                cancellationToken);
+                cancellationToken))
+            {
+                response.EnsureSuccessStatusCode();
 
-            response.EnsureSuccessStatusCode();
+                var responseJson = await response.Content.ReadAsStringAsync(cancellationToken);
+                var responseData = JsonSerializer.Deserialize<OpenAiChatResponse>(responseJson);
 
-            var responseJson = await response.Content.ReadAsStringAsync(cancellationToken);
-            var responseData = JsonSerializer.Deserialize<OpenAiChatResponse>(responseJson);
+                stopwatch.Stop();
 
+                if (responseData?.Choices == null || responseData.Choices.Count == 0)
+                    throw new InvalidOperationException("No response from OpenAI");
+
+                var usage = responseData.Usage ?? new OpenAiUsage();
+                var cost = CalculateCost(usage.PromptTokens, usage.CompletionTokens, request.Model ?? _options.Model);
+
+                return new LlmResponse
+                {
+                    Text = responseData.Choices[0].Message?.Content ?? string.Empty,
+                    PromptTokens = usage.PromptTokens,
+                    CompletionTokens = usage.CompletionTokens,
+                    TotalTokens = usage.TotalTokens,
+                    EstimatedCostUsd = cost,
+                    Duration = stopwatch.Elapsed,
+                    FinishReason = responseData.Choices[0].FinishReason
+                };
+            }
             stopwatch.Stop();
 
             if (responseData?.Choices == null || responseData.Choices.Count == 0)
