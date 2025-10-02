@@ -327,22 +327,37 @@ namespace AzureTtsBatchStudio.Services
 
         private static bool IsVoiceWithoutProsodySupport(string voiceName)
         {
-            // List of voice name patterns that don't support prosody adjustments
-            // OpenAI TTS models typically contain "gpt", "turbo", or follow specific naming patterns
-            var unsupportedPatterns = new[]
+            // Only OpenAI TTS voices accessed through Azure OpenAI don't support prosody
+            // These are the exact voice names provided by OpenAI TTS API
+            // Azure Neural voices (even with similar keywords) DO support prosody
+            var openAiVoiceNames = new[]
             {
+                "alloy",
+                "echo", 
+                "fable",
                 "onyx",
                 "nova",
-                "shimmer",
-                "echo",
-                "fable",
-                "alloy",
-                "gpt",
-                "turbo"
+                "shimmer"
             };
             
             var lowerVoiceName = voiceName.ToLowerInvariant();
-            return unsupportedPatterns.Any(pattern => lowerVoiceName.Contains(pattern));
+            
+            // Only mark as unsupported if it's an exact match to OpenAI voice names
+            // or explicitly contains "openai" in the voice name
+            if (openAiVoiceNames.Contains(lowerVoiceName) || lowerVoiceName.Contains("openai"))
+            {
+                return true;
+            }
+            
+            // Check for GPT model voices (e.g., "gpt-4-turbo" but not "Turbo Multilingual")
+            if (lowerVoiceName.StartsWith("gpt-") || lowerVoiceName.StartsWith("gpt4-"))
+            {
+                return true;
+            }
+            
+            // All other voices (including Azure Neural voices with keywords like "turbo" in their display name)
+            // support prosody with predefined rate values and pitch percentages
+            return false;
         }
 
         private static bool DetectSSML(string text)
