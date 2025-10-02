@@ -111,24 +111,6 @@ namespace AzureTtsBatchStudio.Infrastructure.Llm
                     FinishReason = responseData.Choices[0].FinishReason
                 };
             }
-            stopwatch.Stop();
-
-            if (responseData?.Choices == null || responseData.Choices.Count == 0)
-                throw new InvalidOperationException("No response from OpenAI");
-
-            var usage = responseData.Usage ?? new OpenAiUsage();
-            var cost = CalculateCost(usage.PromptTokens, usage.CompletionTokens, request.Model ?? _options.Model);
-
-            return new LlmResponse
-            {
-                Text = responseData.Choices[0].Message?.Content ?? string.Empty,
-                PromptTokens = usage.PromptTokens,
-                CompletionTokens = usage.CompletionTokens,
-                TotalTokens = usage.TotalTokens,
-                EstimatedCostUsd = cost,
-                Duration = stopwatch.Elapsed,
-                FinishReason = responseData.Choices[0].FinishReason
-            };
         }
 
         public async IAsyncEnumerable<LlmDelta> StreamAsync(
