@@ -135,12 +135,15 @@ namespace AzureTtsBatchStudio.Infrastructure.Llm
             };
 
             var json = JsonSerializer.Serialize(requestBody);
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
 
             var endpoint = $"/openai/deployments/{_options.Deployment}/chat/completions?api-version=2024-02-15-preview";
             
-            var response = await _retryPolicy.ExecuteAsync(async ct => 
-                await _httpClient.PostAsync(endpoint, content, ct), 
+            var response = await _retryPolicy.ExecuteAsync(
+                async ct => 
+                {
+                    using var content = new StringContent(json, Encoding.UTF8, "application/json");
+                    return await _httpClient.PostAsync(endpoint, content, ct);
+                }, 
                 cancellationToken);
 
             response.EnsureSuccessStatusCode();
