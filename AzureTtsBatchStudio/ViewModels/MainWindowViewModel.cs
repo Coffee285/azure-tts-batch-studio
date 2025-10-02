@@ -23,6 +23,7 @@ namespace AzureTtsBatchStudio.ViewModels
     {
         private readonly IAzureTtsService _ttsService;
         private readonly ISettingsService _settingsService;
+        private readonly IOpenAIClient _openAIClient;
         private readonly ISsmlEnhancementService _ssmlEnhancementService;
         private readonly ISsmlValidationService _ssmlValidationService;
         private AppSettings _currentSettings = new();
@@ -135,8 +136,8 @@ namespace AzureTtsBatchStudio.ViewModels
             _settingsService = settingsService;
             
             // Initialize services
-            var openAIClient = new OpenAIClient(new System.Net.Http.HttpClient());
-            _ssmlEnhancementService = new SsmlEnhancementService(openAIClient);
+            _openAIClient = new OpenAIClient(new System.Net.Http.HttpClient());
+            _ssmlEnhancementService = new SsmlEnhancementService(_openAIClient);
             _ssmlValidationService = new SsmlValidationService();
             
             // Initialize logger
@@ -295,7 +296,7 @@ namespace AzureTtsBatchStudio.ViewModels
                 // Configure OpenAI client if API key is available
                 if (!string.IsNullOrEmpty(_currentSettings.OpenAIApiKey))
                 {
-                    _ssmlEnhancementService.ConfigureApiKey(_currentSettings.OpenAIApiKey);
+                    _openAIClient.ConfigureApiKey(_currentSettings.OpenAIApiKey);
                     Console.WriteLine("OpenAI client configured with saved API key.");
                 }
                 
