@@ -88,19 +88,46 @@
                     Margin="0,0,0,10">
           <Button Content="Generate Outline" 
                   Command="{Binding GenerateOutlineCommand}"
-                  IsEnabled="{Binding !IsGenerating}"
-                  Background="#4CAF50" Foreground="White" />
+                  Background="#4CAF50" Foreground="White">
+            <Button.Styles>
+              <Style>
+                <Style.DataTriggers>
+                  <DataTrigger Binding="{Binding IsGenerating}" Value="True">
+                    <Setter Property="IsEnabled" Value="False"/>
+                  </DataTrigger>
+                </Style.DataTriggers>
+              </Style>
+            </Button.Styles>
+          </Button>
           <Button Content="Draft Beat" 
                   Command="{Binding DraftBeatCommand}"
-                  IsEnabled="{Binding !IsGenerating}"
-                  Background="#2196F3" Foreground="White" />
+                  Background="#2196F3" Foreground="White">
+            <Button.Styles>
+              <Style>
+                <Style.DataTriggers>
+                  <DataTrigger Binding="{Binding IsGenerating}" Value="True">
+                    <Setter Property="IsEnabled" Value="False"/>
+                  </DataTrigger>
+                </Style.DataTriggers>
+              </Style>
+            </Button.Styles>
+          </Button>
           <Button Content="Cancel" 
                   Command="{Binding CancelCommand}"
                   IsEnabled="{Binding IsGenerating}"
                   Background="#F44336" Foreground="White" />
           <Button Content="Test Connection" 
-                  Command="{Binding TestConnectionCommand}"
-                  IsEnabled="{Binding !IsGenerating}" />
+                  Command="{Binding TestConnectionCommand}">
+            <Button.Styles>
+              <Style>
+                <Style.DataTriggers>
+                  <DataTrigger Binding="{Binding IsGenerating}" Value="True">
+                    <Setter Property="IsEnabled" Value="False"/>
+                  </DataTrigger>
+                </Style.DataTriggers>
+              </Style>
+            </Button.Styles>
+          </Button>
         </StackPanel>
 
         <!-- Output Area -->
