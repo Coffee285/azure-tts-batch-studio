@@ -1,0 +1,144 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:AzureTtsBatchStudio.Features.StoryBuilderV2.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
+             x:Class="AzureTtsBatchStudio.Features.StoryBuilderV2.Views.StoryBuilderV2View"
+             x:DataType="vm:StoryBuilderV2ViewModel">
+
+  <Design.DataContext>
+    <vm:StoryBuilderV2ViewModel />
+  </Design.DataContext>
+
+  <Grid RowDefinitions="Auto,*,Auto" Margin="10">
+    <!-- Header -->
+    <StackPanel Grid.Row="0" Spacing="10">
+      <TextBlock Text="Story Builder V2" FontSize="24" FontWeight="Bold" />
+      <TextBlock Text="AI-powered horror story generation with Azure TTS" 
+                 FontSize="12" Foreground="Gray" />
+    </StackPanel>
+
+    <!-- Main Content -->
+    <Grid Grid.Row="1" ColumnDefinitions="250,*" Margin="0,20,0,0">
+      <!-- Left Panel: Project Explorer -->
+      <Border Grid.Column="0" BorderBrush="Gray" BorderThickness="1" 
+              CornerRadius="5" Padding="10" Margin="0,0,10,0">
+        <StackPanel Spacing="10">
+          <TextBlock Text="Projects" FontSize="16" FontWeight="Bold" />
+          
+          <StackPanel Orientation="Horizontal" Spacing="5">
+            <Button Content="New" Command="{Binding CreateProjectCommand}" 
+                    Width="70" />
+            <Button Content="Refresh" Command="{Binding RefreshProjectsCommand}" 
+                    Width="70" />
+          </StackPanel>
+
+          <ListBox ItemsSource="{Binding AvailableProjects}"
+                   SelectedItem="{Binding SelectedProjectPath}"
+                   Height="150">
+            <ListBox.ItemTemplate>
+              <DataTemplate>
+                <TextBlock Text="{Binding}" />
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+
+          <Button Content="Load Project" Command="{Binding LoadProjectCommand}"
+                  HorizontalAlignment="Stretch" />
+
+          <Separator />
+
+          <TextBlock Text="Beats" FontSize="16" FontWeight="Bold" />
+          
+          <ListBox ItemsSource="{Binding Beats}"
+                   SelectedItem="{Binding SelectedBeat}"
+                   Height="200">
+            <ListBox.ItemTemplate>
+              <DataTemplate>
+                <StackPanel>
+                  <TextBlock Text="{Binding Title}" FontWeight="Bold" />
+                  <TextBlock Text="{Binding Status}" FontSize="10" 
+                             Foreground="Gray" />
+                </StackPanel>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+
+          <Separator />
+
+          <StackPanel Spacing="5">
+            <TextBlock Text="Cost Tracking" FontWeight="Bold" />
+            <TextBlock>
+              <Run Text="Total: $" />
+              <Run Text="{Binding TotalCostUsd, StringFormat=F4}" />
+            </TextBlock>
+            <TextBlock>
+              <Run Text="Tokens: " />
+              <Run Text="{Binding TotalTokens}" />
+            </TextBlock>
+          </StackPanel>
+        </StackPanel>
+      </Border>
+
+      <!-- Right Panel: Main Workspace -->
+      <Grid Grid.Column="1" RowDefinitions="Auto,*">
+        <!-- Toolbar -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="10" 
+                    Margin="0,0,0,10">
+          <Button Content="Generate Outline" 
+                  Command="{Binding GenerateOutlineCommand}"
+                  IsEnabled="{Binding !IsGenerating}"
+                  Background="#4CAF50" Foreground="White" />
+          <Button Content="Draft Beat" 
+                  Command="{Binding DraftBeatCommand}"
+                  IsEnabled="{Binding !IsGenerating}"
+                  Background="#2196F3" Foreground="White" />
+          <Button Content="Cancel" 
+                  Command="{Binding CancelCommand}"
+                  IsEnabled="{Binding IsGenerating}"
+                  Background="#F44336" Foreground="White" />
+          <Button Content="Test Connection" 
+                  Command="{Binding TestConnectionCommand}"
+                  IsEnabled="{Binding !IsGenerating}" />
+        </StackPanel>
+
+        <!-- Output Area -->
+        <Grid Grid.Row="1" RowDefinitions="Auto,*">
+          <TextBlock Grid.Row="0" Text="Output" FontSize="16" 
+                     FontWeight="Bold" Margin="0,0,0,10" />
+          
+          <Border Grid.Row="1" BorderBrush="Gray" BorderThickness="1" 
+                  CornerRadius="5">
+            <ScrollViewer>
+              <TextBox Text="{Binding OutputText}" 
+                       IsReadOnly="True"
+                       TextWrapping="Wrap"
+                       AcceptsReturn="True"
+                       BorderThickness="0"
+                       Background="Transparent"
+                       Margin="10" />
+            </ScrollViewer>
+          </Border>
+        </Grid>
+      </Grid>
+    </Grid>
+
+    <!-- Status Bar -->
+    <Border Grid.Row="2" BorderBrush="Gray" BorderThickness="0,1,0,0" 
+            Padding="10,5" Margin="0,10,0,0">
+      <Grid ColumnDefinitions="*,Auto">
+        <TextBlock Grid.Column="0" Text="{Binding StatusMessage}" 
+                   VerticalAlignment="Center" />
+        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10">
+          <TextBlock Text="Model:" VerticalAlignment="Center" />
+          <TextBlock Text="{Binding LlmModel}" FontWeight="Bold" 
+                     VerticalAlignment="Center" />
+          <TextBlock Text="Temp:" VerticalAlignment="Center" />
+          <TextBlock Text="{Binding Temperature}" FontWeight="Bold" 
+                     VerticalAlignment="Center" />
+        </StackPanel>
+      </Grid>
+    </Border>
+  </Grid>
+</UserControl>
