@@ -135,51 +135,61 @@ namespace AzureTtsBatchStudio.Infrastructure.Llm
             var json = JsonSerializer.Serialize(requestBody);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            var response = await _retryPolicy.ExecuteAsync(async ct => 
-                await _httpClient.PostAsync("/chat/completions", content, ct), 
+            using var requestMessage = new HttpRequestMessage(HttpMethod.Post, "/chat/completions")
+            {
+                Content = content
+            };
+            requestMessage.Headers.Accept.Clear();
+            requestMessage.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("text/event-stream"));
+
+            var response = await _retryPolicy.ExecuteAsync(
+                async ct => await _httpClient.SendAsync(requestMessage, HttpCompletionOption.ResponseHeadersRead, ct),
                 cancellationToken);
 
-            response.EnsureSuccessStatusCode();
-
-            await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-            using var reader = new System.IO.StreamReader(stream);
-
-            while (!reader.EndOfStream && !cancellationToken.IsCancellationRequested)
+            await using (response)
             {
-                var line = await reader.ReadLineAsync(cancellationToken);
-                
-                if (string.IsNullOrWhiteSpace(line) || !line.StartsWith("data: "))
-                    continue;
+                response.EnsureSuccessStatusCode();
 
-                var data = line.Substring(6).Trim();
-                
-                if (data == "[DONE]")
+                await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+                using var reader = new System.IO.StreamReader(stream);
+
+                while (!reader.EndOfStream && !cancellationToken.IsCancellationRequested)
                 {
-                    yield return new LlmDelta { IsComplete = true };
-                    yield break;
+                    var line = await reader.ReadLineAsync(cancellationToken);
+
+                    if (string.IsNullOrWhiteSpace(line) || !line.StartsWith("data: "))
+                        continue;
+
+                    var data = line.Substring(6).Trim();
+
+                    if (data == "[DONE]")
+                    {
+                        yield return new LlmDelta { IsComplete = true };
+                        yield break;
+                    }
+
+                    OpenAiStreamChunk? chunk;
+                    try
+                    {
+                        chunk = JsonSerializer.Deserialize<OpenAiStreamChunk>(data);
+                    }
+                    catch
+                    {
+                        continue;
+                    }
+
+                    if (chunk?.Choices == null || chunk.Choices.Count == 0)
+                        continue;
+
+                    var choice = chunk.Choices[0];
+                    var delta = new LlmDelta
+                    {
+                        Content = choice.Delta?.Content ?? string.Empty,
+                        FinishReason = choice.FinishReason
+                    };
+
+                    yield return delta;
                 }
-
-                OpenAiStreamChunk? chunk;
-                try
-                {
-                    chunk = JsonSerializer.Deserialize<OpenAiStreamChunk>(data);
-                }
-                catch
-                {
-                    continue;
-                }
-
-                if (chunk?.Choices == null || chunk.Choices.Count == 0)
-                    continue;
-
-                var choice = chunk.Choices[0];
-                var delta = new LlmDelta
-                {
-                    Content = choice.Delta?.Content ?? string.Empty,
-                    FinishReason = choice.FinishReason
-                };
-
-                yield return delta;
             }
         }
 
