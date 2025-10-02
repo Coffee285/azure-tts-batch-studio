@@ -46,6 +46,15 @@ namespace AzureTtsBatchStudio.ViewModels
 
         [ObservableProperty]
         private double _pitch = 0.0;
+        
+        [ObservableProperty]
+        private bool _isSpeakingRateEnabled = true;
+        
+        [ObservableProperty]
+        private bool _isPitchEnabled = true;
+        
+        [ObservableProperty]
+        private string _prosodyWarningMessage = string.Empty;
 
         [ObservableProperty]
         private ObservableCollection<string> _audioFormats = new() { "WAV", "MP3", "OGG" };
@@ -171,6 +180,39 @@ namespace AzureTtsBatchStudio.ViewModels
                     });
                 }
             });
+        }
+
+        // Partial method to handle SelectedVoice property changes
+        partial void OnSelectedVoiceChanged(VoiceInfo? value)
+        {
+            UpdateProsodyControls();
+        }
+
+        private void UpdateProsodyControls()
+        {
+            if (SelectedVoice == null)
+            {
+                IsSpeakingRateEnabled = true;
+                IsPitchEnabled = true;
+                ProsodyWarningMessage = string.Empty;
+                return;
+            }
+
+            IsSpeakingRateEnabled = SelectedVoice.SupportsSpeakingRate;
+            IsPitchEnabled = SelectedVoice.SupportsPitch;
+
+            if (!SelectedVoice.SupportsSpeakingRate || !SelectedVoice.SupportsPitch)
+            {
+                var unsupportedFeatures = new List<string>();
+                if (!SelectedVoice.SupportsSpeakingRate) unsupportedFeatures.Add("speaking rate");
+                if (!SelectedVoice.SupportsPitch) unsupportedFeatures.Add("pitch");
+                
+                ProsodyWarningMessage = $"Note: This voice does not support {string.Join(" or ", unsupportedFeatures)} adjustments.";
+            }
+            else
+            {
+                ProsodyWarningMessage = string.Empty;
+            }
         }
 
         private async Task InitializeAsync()
@@ -806,6 +848,44 @@ namespace AzureTtsBatchStudio.ViewModels
         {
             _cancellationTokenSource?.Cancel();
             StatusMessage = "Stopping processing...";
+        }
+
+        [RelayCommand]
+        private async Task SaveProfile()
+        {
+            try
+            {
+                // Save current TTS configuration as default settings
+                _currentSettings.DefaultOutputDirectory = OutputDirectory;
+                _currentSettings.DefaultSpeakingRate = SpeakingRate;
+                _currentSettings.DefaultPitch = Pitch;
+                _currentSettings.DefaultAudioFormat = SelectedAudioFormat;
+                _currentSettings.DefaultQuality = SelectedQuality;
+                
+                if (SelectedLanguage != null)
+                {
+                    _currentSettings.DefaultLanguage = SelectedLanguage.Code;
+                }
+                
+                if (SelectedVoice != null)
+                {
+                    _currentSettings.DefaultVoice = SelectedVoice.Name;
+                }
+
+                await _settingsService.SaveSettingsAsync(_currentSettings);
+                StatusMessage = "Profile saved successfully!";
+                
+                // Reset message after a delay
+                await Task.Delay(3000);
+                if (StatusMessage == "Profile saved successfully!")
+                {
+                    StatusMessage = "Ready";
+                }
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Error saving profile: {ex.Message}";
+            }
         }
 
         [RelayCommand]

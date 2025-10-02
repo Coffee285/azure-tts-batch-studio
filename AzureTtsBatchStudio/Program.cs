@@ -1,46 +1,145 @@
 ﻿using Avalonia;
 using System;
+using System.IO;
 
 namespace AzureTtsBatchStudio;
 
 sealed class Program
 {
+    private static string? _logFilePath;
+
     // Initialization code. Don't use any Avalonia, third-party APIs or any
     // SynchronizationContext-reliant code before AppMain is called: things aren't initialized
     // yet and stuff might break.
     [STAThread]
     public static void Main(string[] args)
     {
-        Console.WriteLine("Azure TTS Batch Studio starting...");
-        Console.WriteLine($"Arguments: {string.Join(" ", args)}");
+        // Initialize crash logging early
+        InitializeCrashLogging();
+        
+        // Register global exception handlers
+        AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
+        System.Threading.Tasks.TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
+        
+        LogMessage("Azure TTS Batch Studio starting...");
+        LogMessage($"Arguments: {string.Join(" ", args)}");
         
         try
         {
-            Console.WriteLine("Building Avalonia app...");
+            LogMessage("Building Avalonia app...");
             var app = BuildAvaloniaApp();
-            Console.WriteLine("Starting with classic desktop lifetime...");
+            LogMessage("Starting with classic desktop lifetime...");
             app.StartWithClassicDesktopLifetime(args);
         }
         catch (Exception ex) when (IsDisplayException(ex))
         {
-            Console.WriteLine($"Display exception caught: {ex.Message}");
+            LogMessage($"Display exception caught: {ex.Message}");
+            LogException(ex);
             HandleDisplayError(ex);
         }
         catch (Exception ex)
         {
+            LogMessage($"CRITICAL ERROR: An unexpected error occurred: {ex.Message}");
+            LogException(ex);
             Console.WriteLine($"CRITICAL ERROR: An unexpected error occurred: {ex.Message}");
             Console.WriteLine($"Stack trace: {ex.StackTrace}");
+            Console.WriteLine($"Log file: {_logFilePath}");
             Console.WriteLine("Please check the application logs for more details.");
             Console.WriteLine("Press any key to exit...");
-            Console.ReadKey();
+            try
+            {
+                Console.ReadKey();
+            }
+            catch
+            {
+                // Ignore if console read fails
+            }
             Environment.Exit(1);
         }
         
-        Console.WriteLine("Application exiting normally.");
+        LogMessage("Application exiting normally.");
+    }
+
+    private static void InitializeCrashLogging()
+    {
+        try
+        {
+            var tempPath = Path.GetTempPath();
+            var logDir = Path.Combine(tempPath, "AzureTtsBatchStudio", "crash_logs");
+            Directory.CreateDirectory(logDir);
+            
+            var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+            _logFilePath = Path.Combine(logDir, $"crash_log_{timestamp}.txt");
+            
+            LogMessage($"Crash logging initialized: {_logFilePath}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Warning: Could not initialize crash logging: {ex.Message}");
+        }
+    }
+
+    private static void LogMessage(string message)
+    {
+        var timestampedMessage = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}] {message}";
+        Console.WriteLine(timestampedMessage);
+        
+        if (!string.IsNullOrEmpty(_logFilePath))
+        {
+            try
+            {
+                File.AppendAllText(_logFilePath, timestampedMessage + Environment.NewLine);
+            }
+            catch
+            {
+                // Ignore logging errors
+            }
+        }
+    }
+
+    private static void LogException(Exception ex)
+    {
+        LogMessage($"Exception Type: {ex.GetType().FullName}");
+        LogMessage($"Exception Message: {ex.Message}");
+        LogMessage($"Stack Trace: {ex.StackTrace}");
+        
+        if (ex.InnerException != null)
+        {
+            LogMessage("Inner Exception:");
+            LogException(ex.InnerException);
+        }
+    }
+
+    private static void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
+    {
+        LogMessage("=== UNHANDLED EXCEPTION ===");
+        if (e.ExceptionObject is Exception ex)
+        {
+            LogException(ex);
+            Console.WriteLine($"UNHANDLED EXCEPTION: {ex.Message}");
+            Console.WriteLine($"Log file: {_logFilePath}");
+        }
+        else
+        {
+            LogMessage($"Unknown exception object: {e.ExceptionObject}");
+        }
+        LogMessage($"Is Terminating: {e.IsTerminating}");
+    }
+
+    private static void OnUnobservedTaskException(object? sender, System.Threading.Tasks.UnobservedTaskExceptionEventArgs e)
+    {
+        LogMessage("=== UNOBSERVED TASK EXCEPTION ===");
+        LogException(e.Exception);
+        Console.WriteLine($"UNOBSERVED TASK EXCEPTION: {e.Exception.Message}");
+        Console.WriteLine($"Log file: {_logFilePath}");
+        
+        // Mark as observed to prevent app crash
+        e.SetObserved();
     }
 
     private static bool IsDisplayException(Exception ex)
     {
+        LogMessage("Checking if exception is display-related...");
         return ex.Message.Contains("XOpenDisplay failed") ||
                ex.Message.Contains("No display") ||
                ex.Message.Contains("Cannot connect to display") ||
@@ -82,6 +181,8 @@ sealed class Program
         Console.WriteLine("  - Use VNC or RDP for remote desktop access");
         Console.WriteLine();
         Console.WriteLine($"Technical details: {ex.Message}");
+        Console.WriteLine();
+        Console.WriteLine($"Log file: {_logFilePath}");
         Console.WriteLine();
         Console.WriteLine("For more help, visit: https://github.com/Saiyan9001/azure-tts-batch-studio");
         Console.WriteLine("═══════════════════════════════════════════════════════════════");

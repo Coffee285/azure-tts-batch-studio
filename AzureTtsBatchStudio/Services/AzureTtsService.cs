@@ -73,7 +73,11 @@ namespace AzureTtsBatchStudio.Services
                         Language = voice.Locale,
                         Gender = voice.Gender.ToString(),
                         Locale = voice.Locale,
-                        VoiceType = voice.VoiceType.ToString()
+                        VoiceType = voice.VoiceType.ToString(),
+                        // Check if voice supports prosody adjustments
+                        // OpenAI TTS models and some other voices may not support rate/pitch
+                        SupportsSpeakingRate = !IsVoiceWithoutProsodySupport(voice.Name),
+                        SupportsPitch = !IsVoiceWithoutProsodySupport(voice.Name)
                     }).ToList();
                 }
             }
@@ -289,6 +293,17 @@ namespace AzureTtsBatchStudio.Services
 
         private static string GenerateSsml(string text, string voiceName, double rate, double pitch)
         {
+            // For voices that don't support prosody (like OpenAI TTS models), generate simple SSML
+            if (IsVoiceWithoutProsodySupport(voiceName))
+            {
+                return $@"
+<speak version='1.0' xml:lang='en-US' xmlns='http://www.w3.org/2001/10/synthesis'>
+    <voice name='{voiceName}'>
+        {System.Security.SecurityElement.Escape(text)}
+    </voice>
+</speak>";
+            }
+            
             var rateString = rate switch
             {
                 < 0.7 => "x-slow",
@@ -308,6 +323,26 @@ namespace AzureTtsBatchStudio.Services
         </prosody>
     </voice>
 </speak>";
+        }
+
+        private static bool IsVoiceWithoutProsodySupport(string voiceName)
+        {
+            // List of voice name patterns that don't support prosody adjustments
+            // OpenAI TTS models typically contain "gpt", "turbo", or follow specific naming patterns
+            var unsupportedPatterns = new[]
+            {
+                "onyx",
+                "nova",
+                "shimmer",
+                "echo",
+                "fable",
+                "alloy",
+                "gpt",
+                "turbo"
+            };
+            
+            var lowerVoiceName = voiceName.ToLowerInvariant();
+            return unsupportedPatterns.Any(pattern => lowerVoiceName.Contains(pattern));
         }
 
         private static bool DetectSSML(string text)

@@ -31,6 +31,9 @@ public partial class App : Application
             {
                 Console.WriteLine("Classic desktop application lifetime detected.");
                 
+                // Add exception handler for main window events
+                desktop.Exit += OnApplicationExit;
+                
                 // Avoid duplicate validations from both Avalonia and the CommunityToolkit. 
                 // More info: https://docs.avaloniaui.net/docs/guides/development-guides/data-validation#manage-validationplugins
                 DisableAvaloniaDataAnnotationValidation();
@@ -158,6 +161,11 @@ public partial class App : Application
         }
 
         Console.WriteLine("Application framework initialization completed successfully.");
+    }
+
+    private void OnApplicationExit(object? sender, ControlledApplicationLifetimeExitEventArgs e)
+    {
+        Console.WriteLine($"Application exiting with exit code: {e.ApplicationExitCode}");
     }
 
     public void ApplyTheme(string themeVariant)

@@ -156,6 +156,7 @@
                                 </Grid.ColumnDefinitions>
                                 <Slider Grid.Column="0" Value="{Binding SpeakingRate}" 
                                         Minimum="0.5" Maximum="2.0" TickFrequency="0.01"
+                                        IsEnabled="{Binding IsSpeakingRateEnabled}"
                                         Margin="0,0,8,0"/>
                                 <TextBlock Grid.Column="1" 
                                            Text="{Binding SpeakingRate, StringFormat='{}{0:F2}x'}" 
@@ -175,6 +176,7 @@
                                 </Grid.ColumnDefinitions>
                                 <Slider Grid.Column="0" Value="{Binding Pitch}" 
                                         Minimum="-50" Maximum="50" TickFrequency="5"
+                                        IsEnabled="{Binding IsPitchEnabled}"
                                         Margin="0,0,8,0"/>
                                 <TextBlock Grid.Column="1" 
                                            Text="{Binding Pitch, StringFormat='{}{0:F0}%'}" 
@@ -183,6 +185,15 @@
                                            VerticalAlignment="Center" MinWidth="35"/>
                             </Grid>
                         </Grid>
+                        
+                        <!-- Prosody Warning Message -->
+                        <TextBlock Text="{Binding ProsodyWarningMessage}" 
+                                   IsVisible="{Binding ProsodyWarningMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                   FontFamily="{StaticResource PrimaryFont}"
+                                   FontSize="{StaticResource FontSizeSmall}"
+                                   Foreground="Orange"
+                                   TextWrapping="Wrap"
+                                   Margin="0,12,0,0"/>
                     </StackPanel>
                 </Border>
                 
