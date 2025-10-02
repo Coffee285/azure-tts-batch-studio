@@ -88,11 +88,7 @@ namespace AzureTtsBatchStudio.Features.StoryBuilderV2.Services
                 await File.WriteAllTextAsync(tempFile, json);
 
                 // Replace original file
-                if (File.Exists(projectFile))
-                {
-                    File.Delete(projectFile);
-                }
-                File.Move(tempFile, projectFile);
+                File.Replace(tempFile, projectFile, backupFileName: null);
 
                 return Result.Success();
             }
