@@ -295,10 +295,7 @@ namespace AzureTtsBatchStudio.ViewModels
                 // Configure OpenAI client if API key is available
                 if (!string.IsNullOrEmpty(_currentSettings.OpenAIApiKey))
                 {
-                    var openAIClient = (_ssmlEnhancementService as SsmlEnhancementService)?.GetType()
-                        .GetField("_openAIClient", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-                        ?.GetValue(_ssmlEnhancementService) as IOpenAIClient;
-                    openAIClient?.ConfigureApiKey(_currentSettings.OpenAIApiKey);
+                    _ssmlEnhancementService.ConfigureApiKey(_currentSettings.OpenAIApiKey);
                     Console.WriteLine("OpenAI client configured with saved API key.");
                 }
                 
