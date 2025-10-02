@@ -29,6 +29,21 @@ A comprehensive desktop application for batch conversion of text to speech using
 - **Progress Tracking**: Visual progress indicators for batch operations
 - **Dark/Light Theme**: Automatic theme detection
 
+### 📚 Story Builder (NEW!)
+- **AI-Powered Writing**: Create long-form stories (15-45 minutes) using OpenAI GPT models
+- **Genre Templates**: Pre-built templates for Horror, Deep Web, Alien, and Anachronism stories
+- **Quick Start Guide**: Built-in guidance with examples and story prompts
+- **Sound Effects**: Automatic [SFX:...] marker support for immersive audio
+- **Project Management**: Organize stories in beats/parts with automatic saving
+- **Example Projects**: Complete story examples with prompts and techniques
+- **TTS Integration**: Seamlessly convert generated stories to speech
+
+**New to Story Builder?**
+- Check out the **📖 Quick Start** button in the Story Builder tab
+- Explore templates in the `StoryTemplates/` folder
+- See example projects in `ExampleProjects/` folder
+- Read `STORY_BUILDER_QUICK_START.md` for detailed instructions
+
 ### 📦 Multiple Distribution Methods
 - **MSIX Package**: Modern Windows app store-style installation
 - **Traditional Installer**: Inno Setup-based installer for Windows
@@ -96,6 +111,17 @@ build.bat  # On Windows
 5. Enter your subscription key and region
 6. Test the connection
 
+### Story Builder Setup (Optional)
+If you want to use the AI-powered Story Builder feature:
+1. Get an OpenAI API key from [platform.openai.com/api-keys](https://platform.openai.com/api-keys)
+2. In the application, go to **Settings**
+3. Scroll to **Story Builder Configuration**
+4. Enter your OpenAI API key (starts with `sk-...`)
+5. Optionally set a custom projects root path
+6. Click **Save**
+
+**Note**: Story Builder requires an OpenAI API key and will incur API costs based on usage. GPT-4 is recommended for best quality, GPT-3.5-turbo for faster/cheaper generation.
+
 ### First Run
 1. Launch Azure TTS Batch Studio
 2. Click **Settings** to configure Azure credentials
@@ -127,6 +153,57 @@ build.bat  # On Windows
 1. Select any voice from the dropdown
 2. Click **Preview Selected Voice** to hear a sample
 3. Adjust parameters and preview again until satisfied
+
+### Story Builder Usage (NEW!)
+
+**Quick Start**:
+1. Go to the **Story Builder** tab
+2. Click the **📖 Quick Start** button for immediate guidance
+3. Click **⚙️ API Setup** to configure your OpenAI API key if not done yet
+
+**Creating a Horror Story** (15-45 minutes):
+1. Click **New** to create a new project
+2. Review templates in `StoryTemplates/HorrorTemplate.md` for guidance
+3. In the **Instructions** panel (right side), enter your style guidelines:
+   ```
+   Write in third person, suspenseful tone.
+   Modern horror setting.
+   Focus on atmosphere over gore.
+   Use sounds to build tension.
+   Target: 15 minutes (about 2,250 words).
+   ```
+4. Set **Model Parameters**:
+   - Model: `gpt-4` (best quality) or `gpt-3.5-turbo` (faster/cheaper)
+   - Temperature: `0.8` (balanced creativity)
+   - Max Tokens: `2000`
+
+5. In the **Story Console**, enter your first prompt:
+   ```
+   Write the opening scene of a horror story about a woman working alone 
+   in a high-rise office building at 3 AM. She hears footsteps approaching, 
+   but when the lights go out, she realizes she's not alone. Include sound 
+   effect markers like [SFX:footsteps_echo] and build tension slowly. 
+   End on a cliffhanger. 800 words.
+   ```
+
+6. Click **Send** and wait for AI to generate
+7. Click **Save As Part** to save the generated text
+8. Continue with next prompts to build your story
+9. Export when complete and convert to speech in TTS tab
+
+**Available Templates**:
+- `StoryTemplates/HorrorTemplate.md` - Psychological/supernatural horror
+- `StoryTemplates/DeepWebTemplate.md` - Cyber-horror and tech mysteries
+- `StoryTemplates/AlienTemplate.md` - Sci-fi horror and cosmic dread
+- `StoryTemplates/AnachronismTemplate.md` - Time loops and temporal horror
+
+**Example Projects**:
+- `ExampleProjects/Horror_Example_TheNightShift/` - Complete 15-min horror example
+
+**Full Documentation**:
+- `STORY_BUILDER_QUICK_START.md` - Beginner's guide
+- `STORY_BUILDER_README.md` - Technical details
+- `README_StoryBuilderV2.md` - Advanced features
 
 ## File Formats
 
