@@ -150,12 +150,13 @@
         <Grid Grid.Column="2">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
             
-            <!-- Story Console Header -->
+            <!-- Story Console Header with Help -->
             <Border Grid.Row="0" 
                     BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" 
                     BorderThickness="1" 
@@ -163,14 +164,159 @@
                     Padding="{StaticResource LargeMargin}"
                     Margin="0,0,0,8"
                     Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
-                <TextBlock Text="Story Console" 
-                           FontFamily="{StaticResource PrimaryFont}"
-                           FontSize="{StaticResource FontSizeXLarge}"
-                           FontWeight="SemiBold"/>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <TextBlock Grid.Column="0" 
+                               Text="Story Console" 
+                               FontFamily="{StaticResource PrimaryFont}"
+                               FontSize="{StaticResource FontSizeXLarge}"
+                               FontWeight="SemiBold"
+                               VerticalAlignment="Center"/>
+                    
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                        <Button Content="📖 Quick Start" 
+                                Click="ShowQuickStart_Click"
+                                Background="Transparent"
+                                BorderBrush="{StaticResource AccentBrush}"
+                                Foreground="{StaticResource AccentBrush}"
+                                BorderThickness="1"
+                                CornerRadius="{StaticResource ButtonCornerRadius}"
+                                Padding="8,4"
+                                FontSize="{StaticResource FontSizeSmall}"
+                                ToolTip.Tip="Show quick start guide and story templates"/>
+                        <Button Content="⚙️ API Setup" 
+                                Click="OpenSettings_Click"
+                                Background="Transparent"
+                                BorderBrush="{StaticResource SuccessBrush}"
+                                Foreground="{StaticResource SuccessBrush}"
+                                BorderThickness="1"
+                                CornerRadius="{StaticResource ButtonCornerRadius}"
+                                Padding="8,4"
+                                FontSize="{StaticResource FontSizeSmall}"
+                                ToolTip.Tip="Configure OpenAI API key in Settings"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+            
+            <!-- Quick Start / Help Panel (Collapsible) -->
+            <Border Grid.Row="1" 
+                    x:Name="HelpPanel"
+                    BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" 
+                    BorderThickness="1" 
+                    CornerRadius="{StaticResource CardCornerRadius}" 
+                    Padding="{StaticResource LargeMargin}"
+                    Margin="0,0,0,8"
+                    Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}"
+                    IsVisible="False">
+                <ScrollViewer MaxHeight="300" VerticalScrollBarVisibility="Auto">
+                    <StackPanel Spacing="12">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" 
+                                       Text="🚀 Quick Start Guide" 
+                                       FontFamily="{StaticResource PrimaryFont}"
+                                       FontSize="{StaticResource FontSizeLarge}"
+                                       FontWeight="Bold"/>
+                            <Button Grid.Column="1" 
+                                    Content="✕" 
+                                    Click="HideQuickStart_Click"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    Padding="4"
+                                    FontSize="{StaticResource FontSizeLarge}"/>
+                        </Grid>
+                        
+                        <!-- Prerequisites -->
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="1️⃣ First Time Setup" FontWeight="Bold" FontSize="{StaticResource FontSizeMedium}"/>
+                            <Border Background="{DynamicResource SystemControlBackgroundBaseLowBrush}" 
+                                    CornerRadius="4" Padding="8">
+                                <StackPanel Spacing="4">
+                                    <TextBlock TextWrapping="Wrap">
+                                        <Run Text="⚠️ Important: " FontWeight="Bold" Foreground="{StaticResource ErrorBrush}"/>
+                                        <Run Text="You need an OpenAI API key to use Story Builder."/>
+                                    </TextBlock>
+                                    <TextBlock TextWrapping="Wrap">
+                                        <Run Text="1. Click"/>
+                                        <Run Text="⚙️ API Setup" FontWeight="Bold" Foreground="{StaticResource SuccessBrush}"/>
+                                        <Run Text="button above"/>
+                                    </TextBlock>
+                                    <TextBlock Text="2. Scroll to 'Story Builder Configuration'" TextWrapping="Wrap"/>
+                                    <TextBlock Text="3. Enter your OpenAI API key (starts with sk-...)" TextWrapping="Wrap"/>
+                                    <TextBlock Text="4. Click Save" TextWrapping="Wrap"/>
+                                    <TextBlock TextWrapping="Wrap" Opacity="0.8" FontSize="{StaticResource FontSizeSmall}">
+                                        <Run Text="Don't have a key? Visit: "/>
+                                        <Run Text="platform.openai.com/api-keys" FontStyle="Italic"/>
+                                    </TextBlock>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                        
+                        <!-- Story Templates -->
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="2️⃣ Choose Your Genre" FontWeight="Bold" FontSize="{StaticResource FontSizeMedium}"/>
+                            <Border Background="{DynamicResource SystemControlBackgroundBaseLowBrush}" 
+                                    CornerRadius="4" Padding="8">
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="📁 Templates available in StoryTemplates/ folder:" FontWeight="SemiBold" FontSize="{StaticResource FontSizeSmall}"/>
+                                    <TextBlock Text="👻 Horror - Psychological, supernatural, atmospheric" FontSize="{StaticResource FontSizeSmall}"/>
+                                    <TextBlock Text="🌐 Deep Web - Cyber-horror, tech mysteries, digital nightmares" FontSize="{StaticResource FontSizeSmall}"/>
+                                    <TextBlock Text="👽 Alien - Sci-fi horror, cosmic dread, first contact" FontSize="{StaticResource FontSizeSmall}"/>
+                                    <TextBlock Text="⏰ Anachronism - Time loops, historical horror, temporal horror" FontSize="{StaticResource FontSizeSmall}"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                        
+                        <!-- Example Prompts -->
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="3️⃣ Example Story Prompt" FontWeight="Bold" FontSize="{StaticResource FontSizeMedium}"/>
+                            <Border Background="{DynamicResource SystemControlBackgroundBaseLowBrush}" 
+                                    CornerRadius="4" Padding="8">
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="Horror (Office at Night):" FontWeight="SemiBold" FontSize="{StaticResource FontSizeSmall}"/>
+                                    <TextBlock TextWrapping="Wrap" FontSize="{StaticResource FontSizeSmall}" Opacity="0.9">
+                                        Write the opening scene of a horror story about a woman working alone in a high-rise office building at 3 AM. She hears footsteps approaching her cubicle, but when the lights go out, she realizes she's not alone. Include sound effect markers like [SFX:footsteps_echo] and build tension slowly. End on a cliffhanger. 800 words.
+                                    </TextBlock>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                        
+                        <!-- Quick Tips -->
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="💡 Quick Tips" FontWeight="Bold" FontSize="{StaticResource FontSizeMedium}"/>
+                            <Border Background="{DynamicResource SystemControlBackgroundBaseLowBrush}" 
+                                    CornerRadius="4" Padding="8">
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="• Include [SFX:sound_name] markers for audio effects" FontSize="{StaticResource FontSizeSmall}"/>
+                                    <TextBlock Text="• 15 min = ~2,250 words (150 WPM)" FontSize="{StaticResource FontSizeSmall}"/>
+                                    <TextBlock Text="• Use Temperature 0.8 for balanced creativity" FontSize="{StaticResource FontSizeSmall}"/>
+                                    <TextBlock Text="• Build tension slowly - don't rush to scares" FontSize="{StaticResource FontSizeSmall}"/>
+                                    <TextBlock Text="• GPT-4 = best quality, GPT-3.5-turbo = faster/cheaper" FontSize="{StaticResource FontSizeSmall}"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                        
+                        <!-- Full Docs Link -->
+                        <TextBlock TextWrapping="Wrap" FontSize="{StaticResource FontSizeSmall}" Opacity="0.8">
+                            <Run Text="📚 For detailed guides, see:"/>
+                            <Run Text="STORY_BUILDER_QUICK_START.md" FontWeight="Bold"/>
+                            <Run Text="and templates in"/>
+                            <Run Text="StoryTemplates/" FontWeight="Bold"/>
+                            <Run Text="folder"/>
+                        </TextBlock>
+                    </StackPanel>
+                </ScrollViewer>
             </Border>
             
             <!-- Output Display -->
-            <Border Grid.Row="1" 
+            <Border Grid.Row="2" 
                     BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" 
                     BorderThickness="1" 
                     CornerRadius="{StaticResource CardCornerRadius}" 
@@ -247,7 +393,7 @@
             </Border>
             
             <!-- Prompt Input -->
-            <Border Grid.Row="2" 
+            <Border Grid.Row="3" 
                     BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" 
                     BorderThickness="1" 
                     CornerRadius="{StaticResource CardCornerRadius}" 
@@ -321,7 +467,7 @@
             </Border>
             
             <!-- Status Bar -->
-            <Border Grid.Row="3" 
+            <Border Grid.Row="4" 
                     BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" 
                     BorderThickness="1" 
                     CornerRadius="{StaticResource CardCornerRadius}" 
