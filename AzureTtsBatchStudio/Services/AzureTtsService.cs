@@ -27,8 +27,19 @@ namespace AzureTtsBatchStudio.Services
         private string? _subscriptionKey;
         private string? _region;
         private SpeechConfig? _speechConfig;
+        private readonly IVoiceCapabilityService _voiceCapabilityService;
 
         public bool IsConfigured => !string.IsNullOrEmpty(_subscriptionKey) && !string.IsNullOrEmpty(_region);
+
+        public AzureTtsService()
+        {
+            _voiceCapabilityService = new VoiceCapabilityService();
+        }
+
+        public AzureTtsService(IVoiceCapabilityService voiceCapabilityService)
+        {
+            _voiceCapabilityService = voiceCapabilityService;
+        }
 
         public void ConfigureConnection(string subscriptionKey, string region)
         {
@@ -66,7 +77,7 @@ namespace AzureTtsBatchStudio.Services
 
                 if (voicesResult.Reason == ResultReason.VoicesListRetrieved)
                 {
-                    return voicesResult.Voices.Select(voice => new Models.VoiceInfo
+                    var voices = voicesResult.Voices.Select(voice => new Models.VoiceInfo
                     {
                         Name = voice.Name,
                         DisplayName = voice.LocalName,
@@ -77,8 +88,17 @@ namespace AzureTtsBatchStudio.Services
                         // Check if voice supports prosody adjustments
                         // OpenAI TTS models and some other voices may not support rate/pitch
                         SupportsSpeakingRate = !IsVoiceWithoutProsodySupport(voice.Name),
-                        SupportsPitch = !IsVoiceWithoutProsodySupport(voice.Name)
+                        SupportsPitch = !IsVoiceWithoutProsodySupport(voice.Name),
+                        SupportsVolume = !IsVoiceWithoutProsodySupport(voice.Name)
                     }).ToList();
+
+                    // Enrich voices with style and role capabilities
+                    foreach (var voice in voices)
+                    {
+                        await _voiceCapabilityService.EnrichVoiceInfoAsync(voice);
+                    }
+
+                    return voices;
                 }
             }
             catch (Exception ex)

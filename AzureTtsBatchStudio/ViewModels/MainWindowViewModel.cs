@@ -23,6 +23,8 @@ namespace AzureTtsBatchStudio.ViewModels
     {
         private readonly IAzureTtsService _ttsService;
         private readonly ISettingsService _settingsService;
+        private readonly ISsmlEnhancementService _ssmlEnhancementService;
+        private readonly ISsmlValidationService _ssmlValidationService;
         private AppSettings _currentSettings = new();
         private CancellationTokenSource? _cancellationTokenSource;
 
@@ -55,6 +57,12 @@ namespace AzureTtsBatchStudio.ViewModels
         
         [ObservableProperty]
         private string _prosodyWarningMessage = string.Empty;
+        
+        [ObservableProperty]
+        private string _voiceCapabilitiesInfo = string.Empty;
+        
+        [ObservableProperty]
+        private bool _isEnhancing = false;
 
         [ObservableProperty]
         private ObservableCollection<string> _audioFormats = new() { "WAV", "MP3", "OGG" };
@@ -126,6 +134,11 @@ namespace AzureTtsBatchStudio.ViewModels
             _ttsService = ttsService;
             _settingsService = settingsService;
             
+            // Initialize services
+            var openAIClient = new OpenAIClient(new System.Net.Http.HttpClient());
+            _ssmlEnhancementService = new SsmlEnhancementService(openAIClient);
+            _ssmlValidationService = new SsmlValidationService();
+            
             // Initialize logger
             LogConsoleViewModel = new AzureTtsBatchStudio.Logging.LogViewModel();
             
@@ -195,24 +208,49 @@ namespace AzureTtsBatchStudio.ViewModels
                 IsSpeakingRateEnabled = true;
                 IsPitchEnabled = true;
                 ProsodyWarningMessage = string.Empty;
+                VoiceCapabilitiesInfo = string.Empty;
                 return;
             }
 
             IsSpeakingRateEnabled = SelectedVoice.SupportsSpeakingRate;
             IsPitchEnabled = SelectedVoice.SupportsPitch;
 
-            if (!SelectedVoice.SupportsSpeakingRate || !SelectedVoice.SupportsPitch)
+            // Build warning message for unsupported features
+            var unsupportedFeatures = new List<string>();
+            if (!SelectedVoice.SupportsSpeakingRate) unsupportedFeatures.Add("speaking rate");
+            if (!SelectedVoice.SupportsPitch) unsupportedFeatures.Add("pitch");
+            
+            if (unsupportedFeatures.Any())
             {
-                var unsupportedFeatures = new List<string>();
-                if (!SelectedVoice.SupportsSpeakingRate) unsupportedFeatures.Add("speaking rate");
-                if (!SelectedVoice.SupportsPitch) unsupportedFeatures.Add("pitch");
-                
                 ProsodyWarningMessage = $"Note: This voice does not support {string.Join(" or ", unsupportedFeatures)} adjustments.";
             }
             else
             {
                 ProsodyWarningMessage = string.Empty;
             }
+            
+            // Build capabilities info
+            var capabilitiesBuilder = new System.Text.StringBuilder();
+            capabilitiesBuilder.Append("Voice Capabilities: ");
+            
+            var capabilities = new List<string>();
+            if (SelectedVoice.SupportsSpeakingRate && SelectedVoice.SupportsPitch)
+                capabilities.Add("✓ Prosody");
+            if (SelectedVoice.SupportsStyle)
+                capabilities.Add($"✓ Styles ({SelectedVoice.AvailableStyles.Count})");
+            if (SelectedVoice.SupportsRole)
+                capabilities.Add($"✓ Roles ({SelectedVoice.AvailableRoles.Count})");
+                
+            if (capabilities.Any())
+            {
+                capabilitiesBuilder.Append(string.Join(", ", capabilities));
+            }
+            else
+            {
+                capabilitiesBuilder.Append("Basic voice only");
+            }
+            
+            VoiceCapabilitiesInfo = capabilitiesBuilder.ToString();
         }
 
         private async Task InitializeAsync()
@@ -252,6 +290,13 @@ namespace AzureTtsBatchStudio.ViewModels
                 else
                 {
                     Console.WriteLine("Azure TTS service not configured - no saved credentials found.");
+                }
+                
+                // Configure OpenAI client if API key is available
+                if (!string.IsNullOrEmpty(_currentSettings.OpenAIApiKey))
+                {
+                    _ssmlEnhancementService.ConfigureApiKey(_currentSettings.OpenAIApiKey);
+                    Console.WriteLine("OpenAI client configured with saved API key.");
                 }
                 
                 Console.WriteLine("Settings loaded successfully.");
@@ -598,6 +643,52 @@ namespace AzureTtsBatchStudio.ViewModels
         }
 
         [RelayCommand]
+        private async Task EnhanceForSpeech()
+        {
+            if (string.IsNullOrWhiteSpace(InputText))
+            {
+                StatusMessage = "Please enter text to enhance";
+                return;
+            }
+
+            if (SelectedVoice == null)
+            {
+                StatusMessage = "Please select a voice first";
+                return;
+            }
+
+            if (!_ssmlEnhancementService.IsConfigured)
+            {
+                StatusMessage = "OpenAI API key not configured. Please set it in Settings.";
+                return;
+            }
+
+            try
+            {
+                IsEnhancing = true;
+                StatusMessage = "Enhancing text for speech with AI...";
+
+                var enhancedSsml = await _ssmlEnhancementService.EnhanceTextForSpeechAsync(
+                    InputText, 
+                    SelectedVoice, 
+                    CancellationToken.None);
+
+                // Replace input text with enhanced SSML
+                InputText = enhancedSsml;
+                
+                StatusMessage = "Text enhanced successfully! SSML has been applied.";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Enhancement error: {ex.Message}";
+            }
+            finally
+            {
+                IsEnhancing = false;
+            }
+        }
+
+        [RelayCommand]
         private async Task GenerateSpeech()
         {
             if (string.IsNullOrWhiteSpace(InputText))
@@ -616,6 +707,29 @@ namespace AzureTtsBatchStudio.ViewModels
             {
                 StatusMessage = "Please select an output directory";
                 return;
+            }
+
+            // Validate batch request before processing
+            var validationResult = _ssmlValidationService.ValidateBatchRequest(
+                InputText, 
+                SelectedVoice, 
+                OutputDirectory);
+
+            if (!validationResult.IsValid)
+            {
+                StatusMessage = $"Validation failed: {string.Join("; ", validationResult.Errors)}";
+                
+                // Show detailed validation results
+                var summary = validationResult.GetSummary();
+                Console.WriteLine("Validation Results:\n" + summary);
+                
+                return;
+            }
+
+            // Show warnings if any
+            if (validationResult.Warnings.Any())
+            {
+                Console.WriteLine("Validation Warnings:\n" + string.Join("\n", validationResult.Warnings));
             }
 
             try

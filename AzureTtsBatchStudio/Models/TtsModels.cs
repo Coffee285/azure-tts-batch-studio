@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.ComponentModel;
 
 namespace AzureTtsBatchStudio.Models
@@ -11,9 +12,17 @@ namespace AzureTtsBatchStudio.Models
         public string Locale { get; set; } = string.Empty;
         public string VoiceType { get; set; } = string.Empty;
         
-        // Prosody support flags - some voices (like OpenAI TTS models) may not support rate/pitch adjustments
+        // Voice capability flags - indicates which SSML features are supported
         public bool SupportsSpeakingRate { get; set; } = true;
         public bool SupportsPitch { get; set; } = true;
+        public bool SupportsVolume { get; set; } = true;
+        public bool SupportsStyle { get; set; } = false;  // style attribute (e.g., cheerful, sad)
+        public bool SupportsStyleDegree { get; set; } = false;  // styledegree attribute (intensity)
+        public bool SupportsRole { get; set; } = false;  // role attribute (e.g., narrator, character)
+        
+        // Available styles and roles (if supported)
+        public List<string> AvailableStyles { get; set; } = new();
+        public List<string> AvailableRoles { get; set; } = new();
 
         public override string ToString()
         {
