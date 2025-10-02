@@ -88,46 +88,19 @@
                     Margin="0,0,0,10">
           <Button Content="Generate Outline" 
                   Command="{Binding GenerateOutlineCommand}"
-                  Background="#4CAF50" Foreground="White">
-            <Button.Styles>
-              <Style>
-                <Style.DataTriggers>
-                  <DataTrigger Binding="{Binding IsGenerating}" Value="True">
-                    <Setter Property="IsEnabled" Value="False"/>
-                  </DataTrigger>
-                </Style.DataTriggers>
-              </Style>
-            </Button.Styles>
-          </Button>
+                  IsEnabled="{Binding !IsGenerating}"
+                  Background="#4CAF50" Foreground="White" />
           <Button Content="Draft Beat" 
                   Command="{Binding DraftBeatCommand}"
-                  Background="#2196F3" Foreground="White">
-            <Button.Styles>
-              <Style>
-                <Style.DataTriggers>
-                  <DataTrigger Binding="{Binding IsGenerating}" Value="True">
-                    <Setter Property="IsEnabled" Value="False"/>
-                  </DataTrigger>
-                </Style.DataTriggers>
-              </Style>
-            </Button.Styles>
-          </Button>
+                  IsEnabled="{Binding !IsGenerating}"
+                  Background="#2196F3" Foreground="White" />
           <Button Content="Cancel" 
                   Command="{Binding CancelCommand}"
                   IsEnabled="{Binding IsGenerating}"
                   Background="#F44336" Foreground="White" />
           <Button Content="Test Connection" 
-                  Command="{Binding TestConnectionCommand}">
-            <Button.Styles>
-              <Style>
-                <Style.DataTriggers>
-                  <DataTrigger Binding="{Binding IsGenerating}" Value="True">
-                    <Setter Property="IsEnabled" Value="False"/>
-                  </DataTrigger>
-                </Style.DataTriggers>
-              </Style>
-            </Button.Styles>
-          </Button>
+                  Command="{Binding TestConnectionCommand}"
+                  IsEnabled="{Binding !IsGenerating}" />
         </StackPanel>
 
         <!-- Output Area -->
