@@ -81,11 +81,12 @@ namespace AzureTtsBatchStudio.Infrastructure.Llm
             };
 
             var json = JsonSerializer.Serialize(requestBody);
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            await using (var response = await _retryPolicy.ExecuteAsync(async ct => 
-                await _httpClient.PostAsync("/chat/completions", content, ct), 
-                cancellationToken))
+            using (var response = await _retryPolicy.ExecuteAsync(async ct =>
+            {
+                using var content = new StringContent(json, Encoding.UTF8, "application/json");
+                return await _httpClient.PostAsync("chat/completions", content, ct);
+            }, cancellationToken))
             {
                 response.EnsureSuccessStatusCode();
 
