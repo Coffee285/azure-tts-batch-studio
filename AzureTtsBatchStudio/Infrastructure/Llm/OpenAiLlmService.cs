@@ -149,7 +149,7 @@ namespace AzureTtsBatchStudio.Infrastructure.Llm
                 },
                 cancellationToken);
 
-            await using (response)
+            using (response)
             {
                 response.EnsureSuccessStatusCode();
 

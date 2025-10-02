@@ -90,7 +90,7 @@ namespace AzureTtsBatchStudio.Features.StoryBuilderV2.Services
                 // Replace original file if it exists, otherwise move temp file into place
                 if (File.Exists(projectFile))
                 {
-                    File.Replace(tempFile, projectFile, backupFileName: null);
+                    File.Replace(tempFile, projectFile, null);
                 }
                 else
                 {
