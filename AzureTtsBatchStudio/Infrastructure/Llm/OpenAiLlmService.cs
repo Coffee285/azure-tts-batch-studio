@@ -134,18 +134,19 @@ namespace AzureTtsBatchStudio.Infrastructure.Llm
                 stream = true
             };
 
-            var json = JsonSerializer.Serialize(requestBody);
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-            using var requestMessage = new HttpRequestMessage(HttpMethod.Post, "/chat/completions")
-            {
-                Content = content
-            };
-            requestMessage.Headers.Accept.Clear();
-            requestMessage.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("text/event-stream"));
-
             var response = await _retryPolicy.ExecuteAsync(
-                async ct => await _httpClient.SendAsync(requestMessage, HttpCompletionOption.ResponseHeadersRead, ct),
+                async ct =>
+                {
+                    var json = JsonSerializer.Serialize(requestBody);
+                    var content = new StringContent(json, Encoding.UTF8, "application/json");
+                    using var requestMessage = new HttpRequestMessage(HttpMethod.Post, "chat/completions")
+                    {
+                        Content = content
+                    };
+                    requestMessage.Headers.Accept.Clear();
+                    requestMessage.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("text/event-stream"));
+                    return await _httpClient.SendAsync(requestMessage, HttpCompletionOption.ResponseHeadersRead, ct);
+                },
                 cancellationToken);
 
             await using (response)
