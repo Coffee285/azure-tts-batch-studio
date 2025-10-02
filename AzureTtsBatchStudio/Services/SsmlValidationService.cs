@@ -37,7 +37,7 @@ namespace AzureTtsBatchStudio.Services
 
             if (Warnings.Any())
             {
-                sb.AppendLine($"⚠️  {Warnings.Count} Warning(s):");
+                sb.AppendLine($"⚠️ {Warnings.Count} Warning(s):");
                 foreach (var warning in Warnings)
                 {
                     sb.AppendLine($"  • {warning}");
