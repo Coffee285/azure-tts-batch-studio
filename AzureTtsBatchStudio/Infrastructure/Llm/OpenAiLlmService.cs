@@ -202,11 +202,11 @@ namespace AzureTtsBatchStudio.Infrastructure.Llm
 
             try
             {
-                var requestBody = new { input };
+                var requestBody = new { input, model = "text-moderation-latest" };
                 var json = JsonSerializer.Serialize(requestBody);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                var response = await _httpClient.PostAsync("/moderations", content, cancellationToken);
+                var response = await _httpClient.PostAsync("moderations", content, cancellationToken);
                 response.EnsureSuccessStatusCode();
 
                 var responseJson = await response.Content.ReadAsStringAsync(cancellationToken);
