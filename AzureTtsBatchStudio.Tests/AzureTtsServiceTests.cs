@@ -64,16 +64,19 @@ namespace AzureTtsBatchStudio.Tests
         }
 
         [Theory]
-        [InlineData("onyx", false, "Onyx voice should not support prosody")]
-        [InlineData("nova", false, "Nova voice should not support prosody")]
-        [InlineData("shimmer", false, "Shimmer voice should not support prosody")]
-        [InlineData("echo", false, "Echo voice should not support prosody")]
-        [InlineData("fable", false, "Fable voice should not support prosody")]
-        [InlineData("alloy", false, "Alloy voice should not support prosody")]
+        [InlineData("onyx", false, "Onyx (OpenAI voice) should not support prosody")]
+        [InlineData("nova", false, "Nova (OpenAI voice) should not support prosody")]
+        [InlineData("shimmer", false, "Shimmer (OpenAI voice) should not support prosody")]
+        [InlineData("echo", false, "Echo (OpenAI voice) should not support prosody")]
+        [InlineData("fable", false, "Fable (OpenAI voice) should not support prosody")]
+        [InlineData("alloy", false, "Alloy (OpenAI voice) should not support prosody")]
         [InlineData("gpt-4-turbo", false, "GPT-4 Turbo should not support prosody")]
         [InlineData("en-US-AriaNeural", true, "Aria Neural should support prosody")]
         [InlineData("en-US-GuyNeural", true, "Guy Neural should support prosody")]
         [InlineData("en-GB-SoniaNeural", true, "Sonia Neural should support prosody")]
+        [InlineData("en-US-JennyMultilingualNeural", true, "Jenny Multilingual Neural should support prosody")]
+        [InlineData("Onyx Turbo Multilingual (Male)", true, "Azure voice with 'Onyx Turbo' in display name should support prosody")]
+        [InlineData("en-US-TurboNeural", true, "Azure voice with 'Turbo' in name should support prosody")]
         public void IsVoiceWithoutProsodySupport_ShouldDetectCorrectly(string voiceName, bool expectedSupport, string reason)
         {
             // Act - Using reflection to test the private method
