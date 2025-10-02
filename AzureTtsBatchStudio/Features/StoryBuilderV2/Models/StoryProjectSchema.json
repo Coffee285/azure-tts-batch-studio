@@ -1,0 +1,241 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "StoryProject",
+  "description": "Story Builder V2 project schema",
+  "type": "object",
+  "required": ["Id", "Title", "Genre", "Style", "Characters", "Beats", "Target", "Tts", "Audio", "Metrics", "CreatedUtc", "UpdatedUtc"],
+  "properties": {
+    "Id": {
+      "type": "string",
+      "description": "Unique project identifier"
+    },
+    "Title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "Project title"
+    },
+    "Genre": {
+      "type": "string",
+      "description": "Story genre (e.g., Horror)"
+    },
+    "Style": {
+      "$ref": "#/definitions/StoryStyleGuide"
+    },
+    "Characters": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Character"
+      }
+    },
+    "Beats": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 50,
+      "items": {
+        "$ref": "#/definitions/StoryBeat"
+      }
+    },
+    "Target": {
+      "$ref": "#/definitions/TargetDuration"
+    },
+    "Tts": {
+      "$ref": "#/definitions/TtsProfile"
+    },
+    "Audio": {
+      "$ref": "#/definitions/AudioDesign"
+    },
+    "Metrics": {
+      "$ref": "#/definitions/ProjectMetrics"
+    },
+    "CreatedUtc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "UpdatedUtc": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "definitions": {
+    "StoryStyleGuide": {
+      "type": "object",
+      "properties": {
+        "NarrativeVoice": { "type": "string" },
+        "ContentConstraints": { "type": "string" },
+        "TropesToAvoid": { "type": "string" },
+        "ToneAnchors": { "type": "string" },
+        "ExampleExcerpts": { "type": "string" }
+      }
+    },
+    "Character": {
+      "type": "object",
+      "required": ["Name"],
+      "properties": {
+        "Name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "VoiceHint": { "type": "string" },
+        "Bio": { "type": "string" },
+        "SpeakingStyle": { "type": "string" },
+        "SafetyNotes": { "type": "string" }
+      }
+    },
+    "StoryBeat": {
+      "type": "object",
+      "required": ["Id", "Title"],
+      "properties": {
+        "Id": { "type": "string" },
+        "Title": { "type": "string" },
+        "Prompt": { "type": "string" },
+        "DraftMd": { "type": "string" },
+        "Status": {
+          "type": "string",
+          "enum": ["Empty", "Drafted", "Refined", "Locked"]
+        },
+        "EstimatedMinutes": {
+          "type": "number",
+          "minimum": 0
+        },
+        "Sfx": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/InlineSfxCue"
+          }
+        },
+        "OrderIndex": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "TargetDuration": {
+      "type": "object",
+      "properties": {
+        "MinMinutes": {
+          "type": "integer",
+          "minimum": 5,
+          "maximum": 120
+        },
+        "MaxMinutes": {
+          "type": "integer",
+          "minimum": 10,
+          "maximum": 180
+        },
+        "TargetWpm": {
+          "type": "integer",
+          "minimum": 80,
+          "maximum": 200
+        }
+      }
+    },
+    "TtsProfile": {
+      "type": "object",
+      "properties": {
+        "DefaultVoice": { "type": "string" },
+        "Rate": {
+          "type": "number",
+          "minimum": 0.5,
+          "maximum": 2.0
+        },
+        "Pitch": {
+          "type": "number",
+          "minimum": -50,
+          "maximum": 50
+        },
+        "Volume": {
+          "type": "number",
+          "minimum": -50,
+          "maximum": 50
+        },
+        "CharacterVoiceMap": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "UseNeural": { "type": "boolean" },
+        "UseMultiVoice": { "type": "boolean" },
+        "UseEmotion": { "type": "boolean" }
+      }
+    },
+    "AudioDesign": {
+      "type": "object",
+      "properties": {
+        "BackgroundTrackPath": { "type": "string" },
+        "BgVolumeDb": {
+          "type": "number",
+          "minimum": -60,
+          "maximum": 6
+        },
+        "Library": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SfxLibraryItem"
+          }
+        },
+        "DuckMusicDuringSpeech": { "type": "boolean" },
+        "DuckDb": {
+          "type": "number",
+          "minimum": -60,
+          "maximum": 0
+        }
+      }
+    },
+    "SfxLibraryItem": {
+      "type": "object",
+      "required": ["Key", "FilePath"],
+      "properties": {
+        "Key": { "type": "string" },
+        "FilePath": { "type": "string" },
+        "Description": { "type": "string" },
+        "DefaultVolumeDb": {
+          "type": "number",
+          "minimum": -60,
+          "maximum": 6
+        }
+      }
+    },
+    "InlineSfxCue": {
+      "type": "object",
+      "required": ["SfxKey"],
+      "properties": {
+        "At": {
+          "type": "string",
+          "description": "TimeSpan format"
+        },
+        "OnWord": { "type": "string" },
+        "SfxKey": { "type": "string" },
+        "VolumeDb": {
+          "type": "number",
+          "minimum": -60,
+          "maximum": 6
+        }
+      }
+    },
+    "ProjectMetrics": {
+      "type": "object",
+      "properties": {
+        "TotalPromptTokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "TotalCompletionTokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "TotalCostUsd": {
+          "type": "number",
+          "minimum": 0
+        },
+        "TotalGenerationTime": {
+          "type": "string",
+          "description": "TimeSpan format"
+        },
+        "GenerationCount": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    }
+  }
+}
