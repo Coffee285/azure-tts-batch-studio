@@ -133,5 +133,29 @@ namespace AzureTtsBatchStudio.Tests
             Assert.Contains("Hello world", result);
             Assert.Contains($"<voice name='{voiceName}'>", result);
         }
+
+        [Fact]
+        public void GenerateSsml_ShouldIncludeProsodyForAzureVoicesWithTurboKeyword()
+        {
+            // Arrange - Using reflection to test the private method
+            var service = new AzureTtsService();
+            var method = typeof(AzureTtsService).GetMethod("GenerateSsml", 
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+            
+            var text = "Hello world";
+            var voiceName = "Onyx Turbo Multilingual (Male)"; // Azure voice with "turbo" in display name
+            var rate = 1.2;
+            var pitch = 5.0;
+            
+            // Act
+            var result = (string)method.Invoke(null, new object[] { text, voiceName, rate, pitch });
+            
+            // Assert - Should include prosody tags for Azure Neural voices
+            Assert.Contains("<prosody", result, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("rate='fast'", result); // 1.2 maps to "fast"
+            Assert.Contains("pitch='+5%'", result);
+            Assert.Contains("Hello world", result);
+            Assert.Contains($"<voice name='{voiceName}'>", result);
+        }
     }
 }
