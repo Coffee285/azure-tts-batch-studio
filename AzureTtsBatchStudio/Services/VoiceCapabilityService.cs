@@ -90,7 +90,7 @@ namespace AzureTtsBatchStudio.Services
                 // English (UK)
                 "en-gb-sonianeural", "en-gb-ryanneural",
                 // English (Australia)
-                "en-au-natashanerural", "en-au-williamneural",
+                "en-au-natashaNeural", "en-au-williamneural",
                 // Chinese
                 "zh-cn-xiaoxiaoneural", "zh-cn-yunxineural", "zh-cn-yunxianeural", "zh-cn-yunyang",
                 "zh-cn-xiaochenneural", "zh-cn-xiaohaneural", "zh-cn-xiaomoaneural", "zh-cn-xiaoruineural",
