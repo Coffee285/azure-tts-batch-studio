@@ -51,5 +51,10 @@
     <PackageReference Include="Serilog.Extensions.Logging" Version="8.0.0" />
     <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
     <PackageReference Include="UTF.Unknown" Version="2.6.0" />
+    <!-- Story Builder V2 Dependencies -->
+    <PackageReference Include="Polly" Version="8.4.1" />
+    <PackageReference Include="FluentValidation" Version="11.9.0" />
+    <PackageReference Include="NAudio" Version="2.2.1" />
+    <PackageReference Include="FFMpegCore" Version="5.1.0" />
   </ItemGroup>
 </Project>
