@@ -194,30 +194,68 @@ namespace AzureTtsBatchStudio.Infrastructure.Llm
         {
             Guard.AgainstNullOrWhiteSpace(input, nameof(input));
 
-            // Azure OpenAI doesn't have a built-in moderation endpoint like OpenAI
-            // Implement basic content filtering here or use Azure Content Safety API
-            await Task.CompletedTask;
+            // Use Azure Content Safety API for moderation
+            // See: https://learn.microsoft.com/en-us/azure/ai-services/content-safety/quickstart?tabs=rest-api
 
-            var flaggedKeywords = new[] { "hate", "violence", "sexual", "self-harm" };
-            var lowerInput = input.ToLowerInvariant();
-            var flagged = false;
+            var endpoint = Environment.GetEnvironmentVariable("AZURE_CONTENT_SAFETY_ENDPOINT");
+            var apiKey = Environment.GetEnvironmentVariable("AZURE_CONTENT_SAFETY_KEY");
+            if (string.IsNullOrWhiteSpace(endpoint) || string.IsNullOrWhiteSpace(apiKey))
+                throw new InvalidOperationException("Azure Content Safety endpoint or key is not configured.");
 
-            foreach (var keyword in flaggedKeywords)
+            using var httpClient = new HttpClient();
+            httpClient.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", apiKey);
+
+            var requestBody = new
             {
-                if (lowerInput.Contains(keyword))
+                text = input
+            };
+            var content = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
+
+            var response = await httpClient.PostAsync($"{endpoint.TrimEnd('/')}/contentsafety/text:analyze?api-version=2023-10-01", content, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                throw new Exception($"Content Safety API error: {response.StatusCode} - {error}");
+            }
+
+            var responseString = await response.Content.ReadAsStringAsync();
+            var moderationResult = ParseContentSafetyResponse(responseString);
+            return moderationResult;
+        }
+
+        private ModerationResult ParseContentSafetyResponse(string responseString)
+        {
+            // Example response: https://learn.microsoft.com/en-us/azure/ai-services/content-safety/concepts/text-output
+            using var doc = JsonDocument.Parse(responseString);
+            var root = doc.RootElement;
+            var categories = new List<string>();
+            bool isFlagged = false;
+            string message = "Content passed moderation";
+
+            if (root.TryGetProperty("categoriesAnalysis", out var categoriesAnalysis))
+            {
+                foreach (var category in categoriesAnalysis.EnumerateArray())
                 {
-                    flagged = true;
-                    break;
+                    var categoryName = category.GetProperty("category").GetString();
+                    var severity = category.GetProperty("severity").GetInt32();
+                    if (severity >= 2) // 2 = high, 3 = very high
+                    {
+                        isFlagged = true;
+                        categories.Add(categoryName);
+                    }
                 }
+            }
+
+            if (isFlagged)
+            {
+                message = "Content flagged by Azure Content Safety: " + string.Join(", ", categories);
             }
 
             return new ModerationResult
             {
-                IsFlagged = flagged,
-                Categories = flagged ? new[] { "content-policy" } : Array.Empty<string>(),
-                Message = flagged 
-                    ? "Content may violate policy (basic keyword check)"
-                    : "Content passed basic moderation"
+                IsFlagged = isFlagged,
+                Categories = categories.ToArray(),
+                Message = message
             };
         }
 
