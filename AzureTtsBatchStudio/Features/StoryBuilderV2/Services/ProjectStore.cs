@@ -87,8 +87,15 @@ namespace AzureTtsBatchStudio.Features.StoryBuilderV2.Services
                 var json = JsonSerializer.Serialize(updatedProject, JsonOptions);
                 await File.WriteAllTextAsync(tempFile, json);
 
-                // Replace original file
-                File.Replace(tempFile, projectFile, backupFileName: null);
+                // Replace original file if it exists, otherwise move temp file into place
+                if (File.Exists(projectFile))
+                {
+                    File.Replace(tempFile, projectFile, backupFileName: null);
+                }
+                else
+                {
+                    File.Move(tempFile, projectFile);
+                }
 
                 return Result.Success();
             }
